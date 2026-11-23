@@ -1,0 +1,2780 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Beer Note">
+<meta name="theme-color" content="#0f1115">
+<title>Beer Tasting Note v2.8</title>
+<style>
+ :root {
+ --bg-main: #0f1115;
+ --bg-card: #181b21;
+ --bg-input: #22262e;
+ --text-main: #f3f4f6;
+ --text-muted: #9ca3af;
+ --accent: #f59e0b;
+ --accent-fg: #111827;
+ --border-color: #2d323e;
+ }
+ [data-theme="light"] {
+ --bg-main: #f8f7f4;
+ --bg-card: #ffffff;
+ --bg-input: #f1efe9;
+ --text-main: #1f2937;
+ --text-muted: #6b7280;
+ --accent: #15803d;
+ --accent-fg: #ffffff;
+ --border-color: #e5e2dc;
+ }
+ [data-theme="navy"] {
+ --bg-main: #0b132b;
+ --bg-card: #1c2541;
+ --bg-input: #273459;
+ --text-main: #f8fafc;
+ --text-muted: #94a3b8;
+ --accent: #eab308;
+ --accent-fg: #0f172a;
+ --border-color: #334155;
+ }
+ [data-theme="mono"] {
+ --bg-main: #ffffff;
+ --bg-card: #f9fafb;
+ --bg-input: #f3f4f6;
+ --text-main: #111827;
+ --text-muted: #6b7280;
+ --accent: #18181b;
+ --accent-fg: #ffffff;
+ --border-color: #e5e7eb;
+ }
+
+ * {
+ box-sizing: border-box;
+ margin: 0;
+ padding: 0;
+ -webkit-tap-highlight-color: transparent;
+ }
+
+ html, body {
+ overscroll-behavior-y: none;
+ }
+ body {
+ font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+ background-color: var(--bg-main);
+ color: var(--text-main);
+ padding-bottom: 92px;
+ line-height: 1.5;
+ transition: background-color 0.2s, color 0.2s;
+ }
+
+ .hidden { display: none !important; }
+
+ /* Header */
+ header {
+ position: sticky;
+ top: 0;
+ z-index: 30;
+ background-color: var(--bg-card);
+ border-bottom: 1px solid var(--border-color);
+ padding: 10px 14px;
+ }
+ .header-inner {
+ max-width: 520px;
+ margin: 0 auto;
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ gap: 8px;
+ }
+ .brand {
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ min-width: 0;
+ }
+ .brand-icon {
+ width: 32px;
+ height: 32px;
+ border-radius: 8px;
+ background-color: var(--accent);
+ color: var(--accent-fg);
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-size: 16px;
+ flex-shrink: 0;
+ }
+ .brand-title {
+ font-size: 16px;
+ font-weight: 800;
+ letter-spacing: -0.02em;
+ white-space: nowrap;
+ overflow: hidden;
+ text-overflow: ellipsis;
+ }
+ .header-actions {
+ display: flex;
+ align-items: center;
+ gap: 6px;
+ flex-shrink: 0;
+ }
+ .btn-pill {
+ background-color: var(--bg-input);
+ color: var(--text-main);
+ border: 1px solid var(--border-color);
+ border-radius: 8px;
+ padding: 6px 10px;
+ font-size: 12px;
+ font-weight: 700;
+ cursor: pointer;
+ display: inline-flex;
+ align-items: center;
+ gap: 4px;
+ }
+
+ /* Main Layout */
+ main {
+ max-width: 520px;
+ margin: 0 auto;
+ padding: 12px 14px;
+ }
+ .stack {
+ display: flex;
+ flex-direction: column;
+ gap: 14px;
+ }
+ .card {
+ background-color: var(--bg-card);
+ border: 1px solid var(--border-color);
+ border-radius: 16px;
+ padding: 14px;
+ box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+ }
+
+ /* Mode Switcher */
+ .mode-switch {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 6px;
+ background-color: var(--bg-card);
+ border: 1px solid var(--border-color);
+ border-radius: 12px;
+ padding: 4px;
+ }
+ .mode-btn {
+ border: none;
+ border-radius: 8px;
+ padding: 10px 6px;
+ font-size: 13px;
+ font-weight: 700;
+ cursor: pointer;
+ background: transparent;
+ color: var(--text-muted);
+ transition: 0.15s;
+ }
+ .mode-btn.active {
+ background-color: var(--accent);
+ color: var(--accent-fg);
+ box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+ }
+
+ /* Photo & Inputs */
+ .basic-row {
+ display: flex;
+ gap: 12px;
+ align-items: stretch;
+ }
+ .photo-box {
+ width: 96px;
+ height: 96px;
+ border-radius: 12px;
+ background-color: var(--bg-input);
+ border: 2px dashed var(--border-color);
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ justify-content: center;
+ cursor: pointer;
+ overflow: hidden;
+ flex-shrink: 0;
+ position: relative;
+ }
+ .photo-box img {
+ width: 100%;
+ height: 100%;
+ object-fit: cover;
+ display: block;
+ }
+ .photo-placeholder {
+ text-align: center;
+ font-size: 10px;
+ color: var(--text-muted);
+ font-weight: 600;
+ padding: 4px;
+ }
+ .photo-placeholder span {
+ display: block;
+ font-size: 20px;
+ margin-bottom: 2px;
+ }
+ .input-col {
+ flex: 1;
+ display: flex;
+ flex-direction: column;
+ gap: 8px;
+ min-width: 0;
+ }
+ .input-grid-2 {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 6px;
+ }
+ input[type="text"], textarea {
+ width: 100%;
+ background-color: var(--bg-input);
+ color: var(--text-main);
+ border: 1px solid var(--border-color);
+ border-radius: 8px;
+ padding: 8px 10px;
+ font-size: 13px;
+ font-family: inherit;
+ outline: none;
+ }
+ input[type="text"]:focus, textarea:focus {
+ border-color: var(--accent);
+ }
+ input.title-input {
+ font-size: 14px;
+ font-weight: 700;
+ }
+
+ /* Section Header */
+ .sec-head {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ margin-bottom: 10px;
+ }
+ .sec-label {
+ font-size: 11px;
+ font-weight: 700;
+ color: var(--text-muted);
+ letter-spacing: 0.04em;
+ }
+ .accent-label {
+ font-size: 12px;
+ font-weight: 800;
+ color: var(--accent);
+ }
+
+ /* Chips */
+ .chip-wrap {
+ display: flex;
+ flex-wrap: wrap;
+ gap: 6px;
+ }
+ .chip {
+ background-color: var(--bg-input);
+ color: var(--text-main);
+ border: 1px solid var(--border-color);
+ border-radius: 8px;
+ padding: 6px 10px;
+ font-size: 11px;
+ font-weight: 700;
+ cursor: pointer;
+ }
+ .chip.rounded {
+ border-radius: 999px;
+ }
+ .chip.active {
+ background-color: var(--accent);
+ color: var(--accent-fg);
+ border-color: var(--accent);
+ }
+
+ /* Sliders */
+ .slider-group {
+ display: flex;
+ flex-direction: column;
+ gap: 12px;
+ }
+ .slider-row-head {
+ display: flex;
+ justify-content: space-between;
+ font-size: 12px;
+ font-weight: 700;
+ margin-bottom: 4px;
+ }
+ input[type="range"] {
+ width: 100%;
+ accent-color: var(--accent);
+ cursor: pointer;
+ height: 6px;
+ }
+ .divider-top {
+ margin-top: 12px;
+ padding-top: 12px;
+ border-top: 1px dashed var(--border-color);
+ }
+
+ /* Judging Boxes */
+ .judge-box {
+ background-color: var(--bg-input);
+ border-radius: 12px;
+ padding: 10px;
+ margin-bottom: 10px;
+ }
+ .guideline-card {
+ background-color: var(--bg-input);
+ border: 1px solid var(--border-color);
+ border-radius: 12px;
+ padding: 10px;
+ margin-top: 8px;
+ }
+ .dropdown-wrap {
+ position: relative;
+ }
+ .dropdown-list {
+ position: absolute;
+ left: 0;
+ right: 0;
+ top: 100%;
+ margin-top: 4px;
+ max-height: 220px;
+ overflow-y: auto;
+ background-color: var(--bg-card);
+ border: 1px solid var(--border-color);
+ border-radius: 12px;
+ z-index: 25;
+ box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+ }
+ .dropdown-item {
+ padding: 8px 10px;
+ border-bottom: 1px solid var(--border-color);
+ cursor: pointer;
+ font-size: 12px;
+ }
+
+ /* SNS Card Area */
+ .frame-grid {
+ display: grid;
+ grid-template-columns: repeat(4, 1fr);
+ gap: 6px;
+ margin-bottom: 10px;
+ }
+ .frame-btn {
+ background-color: var(--bg-input);
+ color: var(--text-main);
+ border: 1px solid var(--border-color);
+ border-radius: 8px;
+ padding: 7px 4px;
+ font-size: 11px;
+ font-weight: 700;
+ cursor: pointer;
+ }
+ .frame-btn.active {
+ background-color: var(--accent);
+ color: var(--accent-fg);
+ border-color: var(--accent);
+ }
+ .canvas-box {
+ width: 100%;
+ aspect-ratio: 1 / 1;
+ border-radius: 12px;
+ overflow: hidden;
+ border: 1px solid var(--border-color);
+ background-color: #000;
+ margin-bottom: 10px;
+ }
+ .canvas-box canvas {
+ width: 100%;
+ height: 100%;
+ display: block;
+ }
+ .action-grid {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 8px;
+ }
+ .btn-secondary {
+ background-color: var(--bg-input);
+ color: var(--text-main);
+ border: 1px solid var(--border-color);
+ border-radius: 12px;
+ padding: 10px;
+ font-size: 12px;
+ font-weight: 700;
+ cursor: pointer;
+ text-align: center;
+ }
+ .btn-primary {
+ width: 100%;
+ background-color: var(--accent);
+ color: var(--accent-fg);
+ border: none;
+ border-radius: 14px;
+ padding: 14px;
+ font-size: 14px;
+ font-weight: 800;
+ cursor: pointer;
+ box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+ }
+
+ /* Bottom Navigation */
+ nav.bottom-nav {
+ position: fixed;
+ bottom: 0;
+ left: 0;
+ right: 0;
+ background-color: var(--bg-card);
+ border-top: 1px solid var(--border-color);
+ padding: 8px 14px;
+ z-index: 30;
+ }
+ .nav-inner {
+ max-width: 520px;
+ margin: 0 auto;
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 8px;
+ }
+ .nav-btn {
+ background-color: var(--bg-input);
+ color: var(--text-main);
+ border: none;
+ border-radius: 10px;
+ padding: 10px;
+ font-size: 12px;
+ font-weight: 700;
+ cursor: pointer;
+ }
+ .nav-btn.active {
+ background-color: var(--accent);
+ color: var(--accent-fg);
+ }
+
+ /* Modals */
+ .modal-backdrop {
+ position: fixed;
+ inset: 0;
+ z-index: 50;
+ background-color: rgba(0, 0, 0, 0.78);
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ padding: 12px;
+ }
+ .modal-panel {
+ background-color: var(--bg-card);
+ border: 1px solid var(--border-color);
+ border-radius: 16px;
+ width: 100%;
+ max-width: 500px;
+ max-height: 85vh;
+ display: flex;
+ flex-direction: column;
+ overflow: hidden;
+ }
+ .modal-header {
+ padding: 12px 14px;
+ border-bottom: 1px solid var(--border-color);
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ }
+ .modal-body {
+ padding: 12px 14px;
+ overflow-y: auto;
+ flex: 1;
+ }
+ .cat-scroll {
+ display: flex;
+ gap: 6px;
+ overflow-x: auto;
+ padding-bottom: 6px;
+ margin-top: 8px;
+ }
+
+ /* History List */
+ .history-item {
+ background-color: var(--bg-card);
+ border: 1px solid var(--border-color);
+ border-radius: 14px;
+ padding: 10px;
+ display: flex;
+ gap: 10px;
+ align-items: center;
+ cursor: pointer;
+ }
+ .history-thumb {
+ width: 58px;
+ height: 58px;
+ border-radius: 10px;
+ object-fit: cover;
+ background-color: var(--bg-input);
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-size: 22px;
+ flex-shrink: 0;
+ }
+ .history-grid {
+ display: grid;
+ grid-template-columns: repeat(3, 1fr);
+ gap: 6px;
+ }
+ .grid-card {
+ aspect-ratio: 1 / 1;
+ border-radius: 10px;
+ overflow: hidden;
+ background-color: var(--bg-card);
+ border: 1px solid var(--border-color);
+ position: relative;
+ cursor: pointer;
+ }
+ .grid-card img {
+ width: 100%;
+ height: 100%;
+ object-fit: cover;
+ }
+ .grid-card-label {
+ position: absolute;
+ bottom: 0;
+ left: 0;
+ right: 0;
+ background: rgba(0, 0, 0, 0.72);
+ color: #fff;
+ font-size: 10px;
+ font-weight: 700;
+ padding: 3px 5px;
+ white-space: nowrap;
+ overflow: hidden;
+ text-overflow: ellipsis;
+ }
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- Header -->
+<header>
+ <div class="header-inner">
+ <div class="brand">
+ <div class="brand-icon">🍺</div>
+ <div class="brand-title">Beer Tasting Note <span style="font-size:10px;opacity:0.65;font-weight:600;">v2.8</span></div>
+ </div>
+ <div class="header-actions">
+ <button type="button" onclick="cycleTheme()" class="btn-pill">🎨 <span id="themeLabel">Dark</span></button>
+ <button type="button" onclick="openStyleModal()" class="btn-pill">📖 スタイル図鑑</button>
+ </div>
+ </div>
+</header>
+
+<!-- Main Container -->
+<main>
+ <!-- VIEW 1: RECORDING -->
+ <div id="view-record" class="stack">
+
+ <!-- Mode Switcher -->
+ <div class="mode-switch">
+ <button type="button" id="btn-mode-subjective" onclick="setMode('subjective')" class="mode-btn active">
+ 主観モード（5軸チャート）
+ </button>
+ <button type="button" id="btn-mode-judging" onclick="setMode('judging')" class="mode-btn">
+ 審査モード（50点減点式）
+ </button>
+ </div>
+
+ <!-- Basic Info & Photo -->
+ <section class="card">
+ <div class="sec-head" style="margin-bottom:8px;">
+ <span class="sec-label">基本情報・写真（自動下書き保存ON）</span>
+ <button type="button" onclick="clearCurrentDraft()" class="chip" style="padding:3px 8px;font-size:10px;">🗑️ 入力クリア</button>
+ </div>
+ <div class="basic-row">
+ <label for="photoInput" class="photo-box">
+ <img id="photoPreview" class="hidden" />
+ <div id="photoPlaceholder" class="photo-placeholder">
+ <span>📷</span>
+ 写真を追加
+ </div>
+ </label>
+ <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="handlePhoto(event)" />
+ <div class="input-col">
+ <input type="text" id="beerName" class="title-input" placeholder="ビール名（例：パンクIPA）" />
+ <input type="text" id="breweryName" placeholder="ブルワリー名" />
+ <div class="input-grid-2">
+ <input type="text" id="venueName" placeholder="店名 / イベント" />
+ <input type="text" id="abvIbu" placeholder="ABV / IBU" />
+ </div>
+ </div>
+ </div>
+ </section>
+
+ <!-- SUBJECTIVE MODE SECTION -->
+ <div id="section-subjective" class="stack">
+ <section class="card">
+ <div class="sec-head">
+ <span class="sec-label">ビアスタイル（タップで基準値セット）</span>
+ <span id="selectedQuickStyleLabel" class="accent-label">West Coast IPA</span>
+ </div>
+ <div id="quickStyleGrid" class="chip-wrap"></div>
+ </section>
+
+ <section class="card">
+ <div class="sec-head">
+ <span class="sec-label">5軸テイスティング評価</span>
+ <span class="sec-label">点線＝スタイル基準</span>
+ </div>
+ <div id="slidersContainer" class="slider-group"></div>
+ <div class="divider-top">
+ <div class="slider-row-head">
+ <span>総合満足度</span>
+ <span id="overallRatingVal" class="accent-label" style="font-size:15px;">4.0 / 5.0</span>
+ </div>
+ <input type="range" id="overallRating" min="1" max="5" step="0.5" value="4.0" oninput="updateSubjective()" />
+ </div>
+ </section>
+ </div>
+
+ <!-- JUDGING MODE SECTION -->
+ <div id="section-judging" class="stack hidden">
+ <section class="card">
+ <div class="sec-head">
+ <span class="sec-label">ガイドライン準拠スタイル（全162種）</span>
+ <button type="button" onclick="openStyleModal()" class="accent-label" style="background:none;border:none;cursor:pointer;text-decoration:underline;">一覧から選択</button>
+ </div>
+ <div class="dropdown-wrap" id="judgingDropdownWrap">
+ <input type="text" id="judgingStyleSearch" placeholder="スタイル名・番号で検索（例：039, IPA, Pilsner）" oninput="filterJudgingStyleDropdown()" onfocus="filterJudgingStyleDropdown()" />
+ <div id="judgingStyleDropdown" class="dropdown-list hidden"></div>
+ </div>
+ <div class="guideline-card">
+ <div class="sec-head" style="margin-bottom:4px;">
+ <span id="jgStyleTitle" class="accent-label">101-A. アメリカンスタイル・インディア・ペールエール</span>
+ </div>
+ <div id="jgStyleSpecs" style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">ABV 6.3-7.5% | IBU 50-70</div>
+ <p id="jgStyleDesc" style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">強烈なホップの苦味と柑橘・松脂・トロピカルなアロマ。クリーンな発酵とドライな後味。</p>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;">
+ <button type="button" onclick="openStyleDetailModal(state.judgingStyle.id)" class="chip active" style="font-size:11px;padding:5px 10px;">📋 項目別基準（外観・香り・味…）</button>
+ <a id="jgWebDirectLink" href="https://www.beertaster.org/beerstyle/" target="_blank" rel="noopener noreferrer" class="chip" style="text-decoration:none;display:inline-flex;align-items:center;font-size:11px;padding:5px 10px;">🌐 Web原文を開く</a>
+ </div>
+ </div>
+ </section>
+
+ <section class="card">
+ <div class="sec-head">
+ <span class="sec-label">項目別スコア（50点満点）</span>
+ <div>
+ <span id="judgingTotalScore" class="accent-label" style="font-size:18px;">42</span>
+ <span style="font-size:11px;color:var(--text-muted);">/ 50点</span>
+ </div>
+ </div>
+
+ <div class="judge-box">
+ <div class="slider-row-head">
+ <span>1. アピアランス（外観・泡持ち）</span>
+ <span id="val-app" class="accent-label">5 / 6</span>
+ </div>
+ <input type="range" id="score-app" min="1" max="6" step="1" value="5" oninput="updateJudging()" />
+ <div id="deduct-app" class="chip-wrap" style="margin-top:8px;"></div>
+ </div>
+
+ <div class="judge-box">
+ <div class="slider-row-head">
+ <span>2. アロマ（香り・オフフレーバー有無）</span>
+ <span id="val-aro" class="accent-label">10 / 12</span>
+ </div>
+ <input type="range" id="score-aro" min="1" max="12" step="1" value="10" oninput="updateJudging()" />
+ <div id="deduct-aro" class="chip-wrap" style="margin-top:8px;"></div>
+ </div>
+
+ <div class="judge-box">
+ <div class="slider-row-head">
+ <span>3. フレーバー（味わい・バランス）</span>
+ <span id="val-fla" class="accent-label">17 / 20</span>
+ </div>
+ <input type="range" id="score-fla" min="1" max="20" step="1" value="17" oninput="updateJudging()" />
+ <div id="deduct-fla" class="chip-wrap" style="margin-top:8px;"></div>
+ </div>
+
+ <div class="judge-box" style="margin-bottom:0;">
+ <div class="slider-row-head">
+ <span>4. マウスフィール（ボディ・炭酸）</span>
+ <span id="val-mou" class="accent-label">4 / 5</span>
+ </div>
+ <input type="range" id="score-mou" min="1" max="5" step="1" value="4" oninput="updateJudging()" />
+ <div id="deduct-mou" class="chip-wrap" style="margin-top:8px;"></div>
+ </div>
+ </section>
+ </div>
+
+ <!-- Flavor Tags -->
+ <section class="card">
+ <div class="sec-head">
+ <span class="sec-label">アロマ・フレーバー特徴（複数選択）</span>
+ </div>
+ <div id="flavorTagsContainer" class="chip-wrap"></div>
+ </section>
+
+ <!-- Overall Impression -->
+ <section class="card">
+ <div id="judgingOverallBox" class="hidden" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-color);">
+ <div class="slider-row-head">
+ <span>5. 総合印象（スタイル忠実度・完成度）</span>
+ <span id="val-ove" class="accent-label">6 / 7</span>
+ </div>
+ <input type="range" id="score-ove" min="1" max="7" step="1" value="6" oninput="updateJudging()" />
+ </div>
+ <div class="sec-head" style="margin-bottom:6px;">
+ <span class="sec-label">テイスティングノート / 総評</span>
+ </div>
+ <textarea id="tastingComment" rows="3" placeholder="印象に残った香り、味わいの変化、ペアリングの感想など..."></textarea>
+ </section>
+
+ <!-- SNS Graphic Card -->
+ <section class="card">
+ <div class="sec-head">
+ <span class="sec-label">SNSシェア用 1:1 グラフィックカード</span>
+ <span class="sec-label">1080×1080px</span>
+ </div>
+
+ <div class="frame-grid">
+ <button type="button" onclick="setCardFrame('focus')" id="frame-focus" class="frame-btn active">全面写真</button>
+ <button type="button" onclick="setCardFrame('split')" id="frame-split" class="frame-btn">横長分割</button>
+ <button type="button" onclick="setCardFrame('side')" id="frame-side" class="frame-btn">縦長分割</button>
+ <button type="button" onclick="setCardFrame('sheet')" id="frame-sheet" class="frame-btn">ラベル風</button>
+ </div>
+
+ <div class="canvas-box">
+ <canvas id="shareCanvas" width="1080" height="1080"></canvas>
+ </div>
+
+ <div class="action-grid">
+ <button type="button" onclick="shareOrDownloadCard()" class="btn-secondary">📤 画像を保存・シェア</button>
+ <button type="button" onclick="copyShareText()" class="btn-secondary">📋 SNS投稿文をコピー</button>
+ </div>
+ </section>
+
+ <!-- Save Button -->
+ <button type="button" onclick="saveRecord()" class="btn-primary">
+ ✅ このテイスティング記録を保存する
+ </button>
+ </div>
+
+ <!-- VIEW 2: HISTORY & SEARCH -->
+ <div id="view-history" class="stack hidden">
+ <div class="card">
+ <div style="display:flex;gap:8px;margin-bottom:10px;">
+ <input type="text" id="historySearch" placeholder="🔍 ビール名・ブルワリー・店名・メモ検索" oninput="renderHistory()" />
+ <button type="button" onclick="toggleHistoryView()" class="btn-pill" style="padding:0 12px;">▦</button>
+ </div>
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
+ <div style="display:flex;gap:4px;">
+ <button type="button" onclick="setHistoryFilter('all')" id="filt-all" class="chip active">すべて</button>
+ <button type="button" onclick="setHistoryFilter('subjective')" id="filt-subjective" class="chip">主観</button>
+ <button type="button" onclick="setHistoryFilter('judging')" id="filt-judging" class="chip">審査</button>
+ </div>
+ <div style="display:flex;gap:4px;flex-wrap:wrap;">
+ <button type="button" onclick="exportCSV()" class="chip">CSV出力</button>
+ <button type="button" onclick="exportJSON()" class="chip">JSON出力</button>
+ <button type="button" onclick="triggerImportJSON()" class="chip">復元</button>
+ <input type="file" id="jsonImportInput" accept=".json,application/json" class="hidden" onchange="importJSON(event)" />
+ </div>
+ </div>
+ </div>
+
+ <div id="historyCount" class="sec-label" style="padding:0 4px;">0件の記録</div>
+ <div id="historyContainer" class="stack"></div>
+ </div>
+</main>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+ <div class="nav-inner">
+ <button type="button" onclick="switchTab('record')" id="nav-record" class="nav-btn active">✍️ 記録する</button>
+ <button type="button" onclick="switchTab('history')" id="nav-history" class="nav-btn">🗂️ 履歴・検索</button>
+ </div>
+</nav>
+
+<!-- Image Save Fallback Modal -->
+<div id="imageSaveModal" class="modal-backdrop hidden">
+ <div class="modal-panel" style="max-width:420px;">
+ <div class="modal-header">
+ <div>
+ <div style="font-size:14px;font-weight:800;">SNSシェア用カード画像</div>
+ <div style="font-size:10px;color:var(--text-muted);">画像を長押しして「画像を保存」または共有できます</div>
+ </div>
+ <button type="button" onclick="closeImageSaveModal()" class="btn-pill">✕</button>
+ </div>
+ <div class="modal-body stack" style="align-items:center;">
+ <img id="exportPreviewImg" style="width:100%;border-radius:12px;border:1px solid var(--border-color);" />
+ <button type="button" onclick="closeImageSaveModal()" class="btn-primary" style="padding:10px;font-size:12px;">閉じる</button>
+ </div>
+ </div>
+</div>
+
+<!-- Style Guideline Modal (All 114 Styles) -->
+<div id="styleModal" class="modal-backdrop hidden">
+ <div class="modal-panel">
+ <div class="modal-header">
+ <div>
+ <div style="font-size:14px;font-weight:800;">ビアスタイル・ガイドライン（全162スタイル）</div>
+ <div style="font-size:10px;color:var(--text-muted);">クラフトビア・アソシエーション基準準拠</div>
+ </div>
+ <button type="button" onclick="closeStyleModal()" class="btn-pill">✕</button>
+ </div>
+ <div style="padding:10px 14px;border-bottom:1px solid var(--border-color);">
+ <input type="text" id="modalStyleSearch" placeholder="番号・日本語名・英語名で検索..." oninput="renderModalStyles()" />
+ <div id="modalCategoryTabs" class="cat-scroll"></div>
+ </div>
+ <div id="modalStyleList" class="modal-body stack"></div>
+ </div>
+</div>
+
+<!-- Style Detail Breakdown Modal -->
+<div id="styleDetailModal" class="modal-backdrop hidden">
+ <div class="modal-panel" style="max-width:480px;">
+ <div class="modal-header">
+ <div style="min-width:0;padding-right:8px;">
+ <span id="sdCatBadge" class="chip active" style="padding:2px 8px;font-size:10px;">カテゴリー</span>
+ <div id="sdTitle" style="font-size:15px;font-weight:800;margin-top:4px;line-height:1.3;">スタイル名</div>
+ <div id="sdSub" style="font-size:11px;color:var(--text-muted);">English Name | Specs</div>
+ </div>
+ <button type="button" onclick="closeStyleDetailModal()" class="btn-pill">✕</button>
+ </div>
+ <div class="modal-body stack" style="font-size:12px;">
+ <div style="background:var(--bg-input);padding:10px 12px;border-radius:12px;border-left:3px solid var(--accent);">
+ <div style="font-weight:800;font-size:11px;color:var(--accent);margin-bottom:2px;">① アピアランス（外観・色調・泡持ち）</div>
+ <div id="sdAppearance" style="color:var(--text-main);"></div>
+ </div>
+ <div style="background:var(--bg-input);padding:10px 12px;border-radius:12px;border-left:3px solid var(--accent);">
+ <div style="font-weight:800;font-size:11px;color:var(--accent);margin-bottom:2px;">② アロマ（香り・エステル・オフフレーバー基準）</div>
+ <div id="sdAroma" style="color:var(--text-main);"></div>
+ </div>
+ <div style="background:var(--bg-input);padding:10px 12px;border-radius:12px;border-left:3px solid var(--accent);">
+ <div style="font-weight:800;font-size:11px;color:var(--accent);margin-bottom:2px;">③ フレーバー（味わい・苦味・バランス）</div>
+ <div id="sdFlavor" style="color:var(--text-main);"></div>
+ </div>
+ <div style="background:var(--bg-input);padding:10px 12px;border-radius:12px;border-left:3px solid var(--accent);">
+ <div style="font-weight:800;font-size:11px;color:var(--accent);margin-bottom:2px;">④ マウスフィール（ボディ・炭酸・アルコール感）</div>
+ <div id="sdMouthfeel" style="color:var(--text-main);"></div>
+ </div>
+ <div style="background:var(--bg-input);padding:10px 12px;border-radius:12px;border-left:3px solid var(--accent);">
+ <div style="font-weight:800;font-size:11px;color:var(--accent);margin-bottom:2px;">⑤ 総合印象・原料・数値基準</div>
+ <div id="sdOverall" style="color:var(--text-main);"></div>
+ </div>
+
+ <div style="background:var(--bg-input);padding:10px 12px;border-radius:12px;display:flex;flex-direction:column;gap:8px;">
+ <div style="font-size:11px;color:var(--text-muted);">公式ガイドライン原文の該当箇所を確認する：</div>
+ <div class="action-grid">
+ <a id="sdWebLink" href="https://www.beertaster.org/beerstyle/" target="_blank" rel="noopener noreferrer" class="btn-primary" style="padding:10px;font-size:12px;text-align:center;text-decoration:none;display:block;">🌐 Web本文へジャンプ</a>
+ <button type="button" onclick="copyStyleQueryForWeb()" class="btn-secondary" style="padding:10px;font-size:12px;">📋 スタイル名をコピー</button>
+ </div>
+ <div style="display:flex;gap:6px;align-items:center;margin-top:2px;">
+ <input type="text" id="customGuidelineUrl" placeholder="公式ガイドラインURL（変更可）" style="font-size:11px;padding:6px 8px;" onchange="saveGuidelineUrl(this.value)" />
+ </div>
+ </div>
+
+ <button type="button" id="sdApplyBtn" class="btn-primary" style="padding:11px;font-size:12px;">このスタイルを審査モードにセット</button>
+ </div>
+ </div>
+</div>
+
+<!-- Detail Modal -->
+<div id="detailModal" class="modal-backdrop hidden">
+ <div class="modal-panel" style="max-width:420px;">
+ <div class="modal-header">
+ <div>
+ <span id="detModeBadge" class="chip active" style="padding:2px 8px;font-size:10px;">主観モード</span>
+ <div id="detTitle" style="font-size:16px;font-weight:800;margin-top:4px;">Beer Name</div>
+ <div id="detSub" style="font-size:11px;color:var(--text-muted);">Brewery / Venue</div>
+ </div>
+ <button type="button" onclick="closeDetailModal()" class="btn-pill">✕</button>
+ </div>
+ <div class="modal-body stack">
+ <img id="detPhoto" class="hidden" style="width:100%;height:180px;object-fit:cover;border-radius:12px;" />
+ <div id="detBody" style="background:var(--bg-input);padding:12px;border-radius:12px;font-size:12px;line-height:1.6;"></div>
+ <div class="action-grid">
+ <button type="button" id="btnReloadRecord" class="btn-primary" style="padding:10px;font-size:12px;">入力画面に呼び出す</button>
+ <button type="button" id="btnDeleteRecord" class="btn-secondary" style="color:#f87171;border-color:#7f1d1d;">削除する</button>
+ </div>
+ </div>
+ </div>
+</div>
+
+<script>
+const QUICK_STYLES = [
+ { name: 'West Coast IPA', vals: [4.5, 4.5, 1.5, 3.5, 3.5] },
+ { name: 'Hazy / NE IPA', vals: [5.0, 2.0, 3.5, 3.5, 3.5] },
+ { name: 'Session IPA', vals: [4.0, 3.5, 1.5, 4.0, 4.5] },
+ { name: 'Imperial IPA', vals: [5.0, 5.0, 3.0, 3.0, 2.0] },
+ { name: 'American Pale Ale', vals: [3.5, 3.5, 2.5, 4.5, 4.5] },
+ { name: 'Pilsner', vals: [3.0, 3.5, 1.5, 4.5, 5.0] },
+ { name: 'Golden / Blonde', vals: [2.5, 2.0, 2.5, 4.5, 5.0] },
+ { name: 'Weizen / Witbier', vals: [4.0, 1.0, 3.5, 4.0, 4.5] },
+ { name: 'Belgian / Saison', vals: [4.0, 2.5, 1.5, 4.0, 4.5] },
+ { name: 'Amber / Red Ale', vals: [3.0, 3.0, 3.5, 4.0, 3.5] },
+ { name: 'Brown / Porter', vals: [3.5, 2.5, 3.5, 4.0, 3.5] },
+ { name: 'Stout / Imperial', vals: [4.5, 3.5, 4.5, 3.5, 2.0] },
+ { name: 'Sour / Gose', vals: [4.0, 1.0, 2.0, 3.5, 4.5] },
+ { name: 'Fruit / Spice', vals: [4.5, 1.5, 3.5, 3.5, 4.0] },
+ { name: 'Barleywine', vals: [4.5, 3.5, 5.0, 3.5, 1.5] }
+];
+
+const AXES = ['アロマ', '苦味', '甘み', 'バランス', 'ドリンカビリティ'];
+const FLAVOR_TAGS = [
+ 'シトラス・柑橘', 'トロピカル', '松脂・ダンク', 'フローラル', 'ハーバル',
+ 'ビスケット・パン', 'カラメル・トフィー', 'ロースト・コーヒー', 'チョコレート',
+ 'バナナ・エステル', 'クローブ・スパイス', 'クリーン・クリスプ', 'サワー・乳酸', 'ファンキー・ブレット'
+];
+
+const DEDUCTION_OPTIONS = {
+ app: ['濁り過多', '泡持ち弱い', '色調ズレ'],
+ aro: ['ダイアセチル', 'DMS', 'アセトアルデヒド', '酸化・紙臭'],
+ fla: ['渋み・エグみ', '甘だれ', 'フェノール過多', '水っぽい'],
+ mou: ['炭酸過多', 'フラット', 'アルコール刺激']
+};
+
+const RAW_2404_STYLES = [
+ ["1-A","酵母なしライトアメリカン・ウィートビール","Light American Wheat Beer without Yeast","ハイブリッド／ミックスド","ABV 3.5-5.5% | IBU 10-35 | SRM 2-7","麦わら色〜ライトアンバー。小麦麦芽30%以上使用。酵母を完全に濾過し、クリーンで軽快、フェノール香なし。"],
+ ["1-B","酵母なしダークアメリカン・ウィートビール","Dark American Wheat Beer without Yeast","ハイブリッド／ミックスド","ABV 3.5-5.5% | IBU 10-25 | SRM 8-22","アンバー〜ダークブラウン。ココアやカラメル、トーストのモルト感があり酵母を濾過した濃色ウィート。"],
+ ["1-C","酵母入りライトアメリカン・ウィートビール","Light American Wheat Beer with Yeast","ハイブリッド／ミックスド","ABV 3.5-5.5% | IBU 10-35 | SRM 2-7","麦わら色〜ライトアンバー。酵母入りで霞み〜濁りがあり、穏やかな酵母の風味と爽やかなホップが調和。"],
+ ["1-D","酵母入りダークアメリカン・ウィートビール","Dark American Wheat Beer with Yeast","ハイブリッド／ミックスド","ABV 3.5-5.5% | IBU 10-25 | SRM 8-22","ミディアムアンバー〜ダークブラウン。酵母入りの柔らかい口当たりとロースト・カラメルモルトの風味。"],
+ ["2","フルーツビール","Fruit Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-70 | SRM 色は果実に依存","ベースビールの特徴と使用した果実の自然な香り・酸味・甘みが美しく調和したビール。"],
+ ["3","柚子ビール","Yuzu Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-50 | SRM ベースに依存","日本特有の柑橘である柚子の爽やかな果皮香と酸味がベースビールと一体化したスタイル。"],
+ ["4","フルーツ・ウィートビール","Fruit Wheat Beer","ハイブリッド／ミックスド","ABV 3.5-7.0% | IBU 10-35 | SRM 色は果実に依存","小麦ビールの軽快なボディと果実のジューシーな風味が融合した爽やかなフルーツウィート。"],
+ ["5","ベルジャンスタイル・フルーツビール","Belgian-Style Fruit Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-70 | SRM 色は果実に依存","ベルギー酵母由来のフルーティ・スパイシーな香りと果実の風味が調和したベルジャンフルーツ。"],
+ ["6","フィールドビール","Field Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-70 | SRM 原料に依存","野菜、芋、栗、米、蕎麦、ナッツなど果実以外の農産物を副原料に使用し特徴を引き出したビール。"],
+ ["7-A","パンプキン・スパイスビール","Pumpkin Spice Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-40 | SRM 5-35","カボチャの風味にシナモン、ナツメグ、クローブなどのスパイスが調和した季節感あふれるビール。"],
+ ["7-B","パンプキン／スクワッシュビール","Pumpkin/Squash Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-40 | SRM 5-35","スパイスを使わずカボチャや瓜類そのものの自然な甘みとコクをベースビールに活かしたスタイル。"],
+ ["8","ハーブおよびスパイスビール","Herb and Spice Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-40 | SRM ベースに依存","山椒、生姜、ハーブ、香辛料などのボタニカルがベースビールと絶妙にバランスするビール。"],
+ ["9","緑茶ビール","Green Tea Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-50 | SRM ベースに依存","煎茶・抹茶・玉露などの緑茶の芳醇な香りや旨味、心地よい渋みが調和した日本発祥スタイル。"],
+ ["10","その他のティービール","Other Tea Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-50 | SRM ベースに依存","紅茶、烏龍茶、ほうじ茶、ハーブティーなど緑茶以外の茶葉の香りがベースビールと融合。"],
+ ["11","チリビール","Chili Pepper Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-50 | SRM ベースに依存","唐辛子由来のスパイシーな香りと心地よい辛味の刺激が後味を引き締める個性派スタイル。"],
+ ["12","チョコレートビール","Chocolate or Cocoa Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 15-40 | SRM 15-40+","カカオニブやチョコレートを使用し、ローストモルトとカカオの芳醇な香りが溶け合うビール。"],
+ ["13","コーヒービール","Coffee Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 15-40 | SRM 8-40+","焙煎コーヒー豆の鮮烈なアロマとフレーバーがベースビールと一体化した人気スタイル。"],
+ ["14-A","ライ・ペールエール／IPA","Rye Pale Ale or IPA","ハイブリッド／ミックスド","ABV 4.5-8.0% | IBU 30-75 | SRM 4-15","ライ麦モルト由来のスパイシーで胡椒のような風味と、ホップの柑橘・松脂香が調和。"],
+ ["14-B","その他のライビール","Other Rye Beer","ハイブリッド／ミックスド","ABV 4.0-8.0% | IBU 15-50 | SRM 4-35","ライ麦特有のスパイシーさと滑らかな口当たりを活かしたエールまたはラガー。"],
+ ["15","ハニービール","Specialty Honey Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-50 | SRM ベースに依存","蜂蜜を使用することで華やかな花の香りとドライで軽快なボディを生み出したビール。"],
+ ["16","ノンアルコール・ビール","Non-Alcoholic Malt Beverage","ハイブリッド／ミックスド","ABV 0.0-0.5% | IBU 5-50 | SRM ベースに依存","アルコール度数0.5%未満でありながら、本格ビールらしいモルトとホップの香味を実現。"],
+ ["17","セッション・ビール","Session Beer","ハイブリッド／ミックスド","ABV 2.5-4.5% | IBU 10-45 | SRM ベースに依存","低アルコールでありながら、ベーススタイルの風味と飲みごたえを損なわない高バランスビール。"],
+ ["18","セッション・インディア・ペールエール","Session India Pale Ale","ハイブリッド／ミックスド","ABV 3.7-5.0% | IBU 35-55 | SRM 3-12","低アルコールながらIPAらしい華やかなホップアロマと爽快でクリーンな苦味を楽しめる。"],
+ ["19","エクスペリメンタル・ビール","Experimental Beer","ハイブリッド／ミックスド","ABV 2.5-15.0% | IBU 5-100 | SRM 自由","既存カテゴリーの枠を超えた革新的製法・原料・発酵を用いた実験的クラフトビール。"],
+ ["20","長期熟成ビール","Aged Beer","ハイブリッド／ミックスド","ABV 5.0-15.0% | IBU 10-100 | SRM ベースに依存","1年以上の長期熟成により、酸化由来のシェリーやドライフルーツ様の複雑な熟成香が調和。"],
+ ["21","酒イーストビール","Sake Yeast Beer","ハイブリッド／ミックスド","ABV 4.5-12.0% | IBU 10-45 | SRM 2-15","清酒酵母（吟醸酵母など）を使用し、カプロン酸エチル様の華やかな吟醸香を持つ日本独自スタイル。"],
+ ["22","ワイルドビール","Wild Beer","ハイブリッド／ミックスド","ABV 3.5-12.0% | IBU 5-50 | SRM ベースに依存","野生酵母や自然発酵由来のファンキーで複雑なエステル・酸味を持つワイルドエール。"],
+ ["23","フレッシュ・ホップ・ビール","Fresh Hop Beer","ハイブリッド／ミックスド","ABV 3.5-11.0% | IBU 15-85 | SRM ベースに依存","収穫直後の未乾燥生ホップを使用し、瑞々しい青草・柑橘・フローラルなアロマが際立つ季節ビール。"],
+ ["24-A","ヒストリカル・ビール","Historical Beer","ハイブリッド／ミックスド","ABV 3.0-10.0% | IBU 5-60 | SRM ベースに依存","古代や中世・近代の伝統的製法や原料を再現した歴史的ビアスタイル。"],
+ ["24-B","ケンタッキー・コモンビール","Kentucky Common Beer","ハイブリッド／ミックスド","ABV 4.0-5.5% | IBU 15-30 | SRM 11-20","禁酒法以前のケンタッキー州伝統ビール。コーン由来の軽快さとカラメル・ローストの香ばしさ。"],
+ ["24-C","グローズィスキー","Grodziskie","ハイブリッド／ミックスド","ABV 2.5-3.3% | IBU 20-35 | SRM 3-6","ポーランド伝統のオーク燻製小麦ビール。低アルコール・高炭酸で軽やかなスモーク香とキレ。"],
+ ["24-D","アダムビール","Adambier","ハイブリッド／ミックスド","ABV 9.0-11.0% | IBU 30-50 | SRM 15-35","ドルトムント発祥の濃色ハイアルコール・スモークサワーエール。熟成による複雑な酸味とコク。"],
+ ["24-E","ダッチスタイル・カイトビール","Dutch-Style Kuit, Kuyt or Koyt","ハイブリッド／ミックスド","ABV 4.7-7.9% | IBU 25-35 | SRM 5-12","オーツ麦・大麦・小麦を使用する15〜16世紀オランダの伝統ビール。穀物の豊かなコクとほのかな酸味。"],
+ ["24-F","フィンランドスタイル・サハティ","Finnish-Style Sahti","ハイブリッド／ミックスド","ABV 7.0-8.5% | IBU 0-15 | SRM 4-22","ジュニパー（杜松）の枝や実で濾過しパン酵母で発酵させるフィンランド伝統の無炭酸・濃厚ビール。"],
+ ["24-G","スウェーデンスタイル・ゴットランズドリッケ","Swedish-Style Gotlandsdricke","ハイブリッド／ミックスド","ABV 6.5-8.5% | IBU 15-25 | SRM 4-12","スウェーデン・ゴットランド島伝統のジュニパーと燻製麦芽を用いたスパイシー＆スモーキーなビール。"],
+ ["24-H","ブレスラウスタイル・シェプス","Breslau-Style Schoeps","ハイブリッド／ミックスド","ABV 6.0-7.0% | IBU 20-30 | SRM 4-12","シレジア地方ブレスラウ伝統の小麦比率が高い上面発酵ビール。豊かなボディとフルーティな香り。"],
+ ["25","ブレットビール","Brett Beer","ハイブリッド／ミックスド","ABV 4.0-10.0% | IBU 5-50 | SRM ベースに依存","ブレタノマイセス酵母由来のパイナップル、革、干し草のような独特のファンキーな風味。"],
+ ["26","アメリカン-ベルゴスタイル・エール","American-Belgo-Style Ale","ハイブリッド／ミックスド","ABV 5.0-11.0% | IBU 20-80 | SRM 3-35","ベルギー酵母のフルーティ・スパイシーな個性と、アメリカンホップの鮮烈な香り・苦味の融合。"],
+ ["27","アメリカンスタイル・サワーエール","American-Style Sour Ale","ハイブリッド／ミックスド","ABV 3.5-9.0% | IBU 3-30 | SRM ベースに依存","乳酸菌やブレタノマイセスを用い、クリーンで鮮烈な酸味と多様な香りを持つ現代サワー。"],
+ ["28","フルーツ入りアメリカンスタイル・サワーエール","American-Style Fruited Sour Ale","ハイブリッド／ミックスド","ABV 3.5-9.0% | IBU 3-30 | SRM 色は果実に依存","アメリカンサワーの爽快な酸味に、果実のジューシーな風味と鮮やかな色合いを加えたスタイル。"],
+ ["29-A","サワー・ペールエール／IPA","Sour Pale Ale or IPA","ハイブリッド／ミックスド","ABV 4.5-8.0% | IBU 10-50 | SRM 3-14","ペールエールやIPAの華やかなホップアロマに、心地よい乳酸の酸味を組み合わせたスタイル。"],
+ ["29-B","その他のサワービール","Other Sour Beer","ハイブリッド／ミックスド","ABV 3.0-11.0% | IBU 3-40 | SRM ベースに依存","既存サワーカテゴリーに属さない独自のベーススタイルと酸味を組み合わせたサワービール。"],
+ ["30","ミックスドカルチャー・ランビック／サワー","Mixed-Culture Brett Beer","ハイブリッド／ミックスド","ABV 4.0-10.0% | IBU 5-40 | SRM ベースに依存","複数種の酵母とバクテリアの共発酵による重層的な酸味と複雑なエステルのハーモニー。"],
+ ["31-A","木片および木樽熟成ビール（6.3%未満）","Wood- and Barrel-Aged Beer (<6.3% ABV)","ハイブリッド／ミックスド","ABV 2.5-6.2% | IBU 5-60 | SRM ベースに依存","アルコール6.3%未満のビールを木樽やウッドチップで熟成し、バニラやオークの香りを付与。"],
+ ["31-B","木片および木樽熟成ストロングビール（6.3%以上）","Wood- and Barrel-Aged Strong Beer (>=6.3% ABV)","ハイブリッド／ミックスド","ABV 6.3-15.0% | IBU 15-90 | SRM ベースに依存","6.3%以上のハイアルコールビールをウイスキーやワイン樽等で熟成させた重厚で複雑なスタイル。"],
+ ["32","木片および木樽熟成ペール〜アンバービール","Wood- and Barrel-Aged Pale to Amber Beer","ハイブリッド／ミックスド","ABV 4.5-12.0% | IBU 10-70 | SRM 3-18","淡色〜琥珀色のベースビールと木樽由来のトースト・バニラ・タンニンが美しく調和。"],
+ ["33","木片および木樽熟成ストロングスタウト","Wood- and Barrel-Aged Strong Stout","ハイブリッド／ミックスド","ABV 7.0-15.0% | IBU 30-90 | SRM 40+","インペリアルスタウト等をバーボン樽などで熟成。ロースト感と樽のバニラ・ウイスキー香が融合。"],
+ ["34","木片および木樽熟成サワービール","Wood- and Barrel-Aged Sour Beer","ハイブリッド／ミックスド","ABV 3.5-12.0% | IBU 5-40 | SRM ベースに依存","木樽の中で野生酵母や乳酸菌により長期熟成させた、複雑な酸味と木の香りを持つビール。"],
+ ["35","フルーツ入り木片および木樽熟成サワービール","Fruited Wood- and Barrel-Aged Sour Beer","ハイブリッド／ミックスド","ABV 3.5-12.0% | IBU 5-40 | SRM 色は果実に依存","木樽熟成サワーに果実を漬け込み、樽香・複雑な酸味・果実味が三位一体となった最高峰サワー。"],
+ ["36","ケラービールまたは未濾過ビール","Kellerbier or Zwickelbier","ハイブリッド／ミックスド","ABV 4.5-5.8% | IBU 18-40 | SRM 3-16","貯蔵タンクから無濾過・無殺菌で提供されるドイツ伝統のフレッシュな濁りビール。"],
+ ["37-A","バンベルクスタイル・ヴァイス・ラオホビール","Bamberg-Style Weiss Rauchbier","ハイブリッド／ミックスド","ABV 4.8-5.6% | IBU 10-15 | SRM 4-15","燻製麦芽を使用したヴァイツェン。バナナ・クローブの香りとブナ材のスモーク香が絶妙に調和。"],
+ ["37-B","バンベルクスタイル・ヘレス・ラオホビール","Bamberg-Style Helles Rauchbier","ハイブリッド／ミックスド","ABV 4.8-5.6% | IBU 18-25 | SRM 4-8","淡色のヘレスをベースにしたラオホビール。軽快なモルトの甘みと上品なスモーク香。"],
+ ["37-C","バンベルクスタイル・メルツェン・ラオホビール","Bamberg-Style Marzen Rauchbier","ハイブリッド／ミックスド","ABV 5.0-6.0% | IBU 18-25 | SRM 12-22","バンベルクの代表格。ブナ材燻製麦芽のベーコン様の香りとメルツェンのリッチなコク。"],
+ ["38","その他のスモークビール","Other Smoke Beer","ハイブリッド／ミックスド","ABV 2.5-12.0% | IBU 5-70 | SRM ベースに依存","ピート燻製や桜チップなど多様な燻製手法を用い、スモーク香とベースビールの個性を融合。"],
+ ["39","カリフォルニア・コモンビール","California Common Beer","ハイブリッド／ミックスド","ABV 4.5-5.6% | IBU 35-45 | SRM 8-15","ラガー酵母をエール並みの高温で発酵させるサンフランシスコ伝統製法。トースト香とウッディな苦味。"],
+ ["40","アメリカンスタイル・クリームエール","American-Style Cream Ale","ハイブリッド／ミックスド","ABV 4.3-5.7% | IBU 10-22 | SRM 2-5","上面発酵ながらラガーのようにクリーンで軽快。ほのかなコーンの甘みと爽快な喉越し。"],
+ ["41","バルチックスタイル・ポーター","Baltic-Style Porter","ハイブリッド／ミックスド","ABV 7.6-9.3% | IBU 35-40 | SRM 20+","バルト海沿岸伝統の低温発酵ハイアルコール黒ビール。滑らかなコクとダークフルーツ・チョコの風味。"],
+ ["42-A","ジャーマンスタイル・ピルスナー","German-Style Pilsner","ドイツ・チェコ・オーストリア系","ABV 4.6-5.3% | IBU 25-40 | SRM 3-4","黄金色で極めてクリア。ノーブルホップの華やかな香りとシャープでドライな苦味。"],
+ ["42-B","ジャーマンスタイル・ライトピルスナー","German-Style Leichtbier","ドイツ・チェコ・オーストリア系","ABV 2.5-3.6% | IBU 16-28 | SRM 2-4","ピルスナーの爽快なホップキャラクターを保ちつつ、アルコールとボディを軽くしたドイツ版ライト。"],
+ ["43-A","ボヘミアンスタイル・ピルスナー","Bohemian-Style Pilsener","ドイツ・チェコ・オーストリア系","ABV 4.1-5.1% | IBU 30-45 | SRM 3-7","チェコ産ザーツホップの気品ある香りと、デコクション製法由来のリッチなモルトのコク。"],
+ ["43-B","ボヘミアンスタイル・ダークラガー","Bohemian-Style Dark Lager (Tmavy)","ドイツ・チェコ・オーストリア系","ABV 4.4-5.8% | IBU 18-34 | SRM 14-35","チェコ伝統の濃色ラガー。カラメルやローストモルトの優しい甘みとザーツホップのキレ。"],
+ ["44","ミュンヒナースタイル・ヘレス","Munchner-Style Helles","ドイツ・チェコ・オーストリア系","ABV 4.8-5.6% | IBU 18-25 | SRM 3-5","ミュンヘン伝統の淡色ラガー。ピルスナーより苦味を抑え、ピルスナーモルトの優しい甘みが主役。"],
+ ["45","ドルトムンダー／ヨーロピアンスタイル・エクスポート","Dortmunder/European-Style Export","ドイツ・チェコ・オーストリア系","ABV 5.1-6.1% | IBU 23-29 | SRM 3-6","ヘレスよりモルトの厚みとアルコールがやや高く、苦味もキリッと効いたドルトムントのラガー。"],
+ ["46","ウインナスタイル・ラガー","Vienna-Style Lager","ドイツ・チェコ・オーストリア系","ABV 4.8-5.4% | IBU 22-28 | SRM 12-16","ウィーンモルト由来の美しい赤褐色とトーストのような香ばしさ、クリーンでドライな後味。"],
+ ["47","ジャーマンスタイル・メルツェン","German-Style Maerzen","ドイツ・チェコ・オーストリア系","ABV 5.3-5.9% | IBU 18-25 | SRM 4-15","オクトーバーフェストの伝統ビール。リッチなモルトの甘みと香ばしさ、滑らかな飲み心地。"],
+ ["48-A","ジャーマンスタイル・オクトーバーフェスト／フェストビア","German-Style Oktoberfest/Festbier","ドイツ・チェコ・オーストリア系","ABV 5.0-6.0% | IBU 18-25 | SRM 4-7","現代のオクトーバーフェスト主流の黄金色ラガー。モルトの甘みがありつつ極めてドリンカブル。"],
+ ["48-B","ジャーマンスタイル・フェストビア（特別規格）","German-Style Wiesn / Festbier","ドイツ・チェコ・オーストリア系","ABV 5.6-6.3% | IBU 18-25 | SRM 3-6","ミュンヘン祭典向けの黄金色ラガー。クリーンな発酵と豊かなピルスナーモルトの味わい。"],
+ ["49-A","ヨーロピアンスタイル・ダークラガー","European-Style Dark Lager","ドイツ・チェコ・オーストリア系","ABV 4.8-5.6% | IBU 15-25 | SRM 14-40","濃色ながら軽快で、パンの耳やカラメルのような優しいロースト風味が楽しめるラガー。"],
+ ["49-B","ミュンヒナースタイル・ドゥンケル","Munchner-Style Dunkel","ドイツ・チェコ・オーストリア系","ABV 4.8-5.3% | IBU 16-25 | SRM 15-20","ミュンヘンモルトを主体とした濃褐色ラガー。チョコレートやナッツの香ばしさと滑らかなコク。"],
+ ["50","ジャーマンスタイル・シュヴァルツビア","German-Style Schwarzbier","ドイツ・チェコ・オーストリア系","ABV 3.8-4.9% | IBU 22-30 | SRM 25-30","漆黒の外観ながら焦げ臭や重さはなく、ローストモルトの香ばしさとラガーのキレが共存。"],
+ ["51","ジャーマンスタイル・ボックまたはマイボック","German-Style Bock or Maibock","ドイツ・チェコ・オーストリア系","ABV 6.3-8.1% | IBU 20-38 | SRM 4-30","春や秋に飲まれる高アルコールラガー。リッチなモルトの甘みと滑らかなボディ。"],
+ ["52-A","ジャーマンスタイル・ドッペルボック","German-Style Doppelbock","ドイツ・チェコ・オーストリア系","ABV 6.6-7.9% | IBU 17-27 | SRM 12-30","「液体のパン」と呼ばれた修道院由来の濃厚ラガー。カラメル・ダークフルーツの濃密な甘み。"],
+ ["52-B","ジャーマンスタイル・アイスボック","German-Style Eisbock","ドイツ・チェコ・オーストリア系","ABV 8.6-14.3% | IBU 26-33 | SRM 15-30","ドッペルボックを凍結させ氷を取り除いて凝縮した超濃厚・ハイアルコールラガー。"],
+ ["53-A","アメリカンスタイル・ラガー","American-Style Lager","北米系（ラガー）","ABV 4.1-5.1% | IBU 5-13 | SRM 2-4","極めて淡色で高炭酸、副原料由来の軽快さと喉越しを追求したクリーンなラガー。"],
+ ["53-B","コンテンポラリー・アメリカンスタイル・ピルスナー","Contemporary American-Style Pilsener","北米系（ラガー）","ABV 4.9-6.0% | IBU 25-40 | SRM 3-6","現代のアメリカンホップや高品質モルトを用いた香り豊かでクリスプなピルスナー。"],
+ ["54-A","アメリカンスタイル・ライトラガー","American-Style Light Lager","北米系（ラガー）","ABV 3.5-4.4% | IBU 4-10 | SRM 2-4","低カロリー・低糖質で極めて軽快、雑味のない爽快な喉越しに特化したライトラガー。"],
+ ["54-B","アメリカンスタイル・ローカーボ・ライトラガー","American-Style Low-Carbohydrate Light Lager","北米系（ラガー）","ABV 3.5-4.4% | IBU 3-10 | SRM 2-3","糖質を極限まで抑え、極めてドライでライトな飲み口に仕上げたライトラガー。"],
+ ["55","アメリカンスタイル・ピルスナー","American-Style Pilsener","北米系（ラガー）","ABV 4.9-6.0% | IBU 25-40 | SRM 3-6","コーンや米を副原料に使用した禁酒法前夜由来のピルスナー。軽快ながらホップの主張が強い。"],
+ ["56","アメリカンスタイル・アンバーラガー","American-Style Amber Lager","北米系（ラガー）","ABV 4.8-5.4% | IBU 18-30 | SRM 6-14","カラメルモルトのコクとほのかな甘みに、クリーンなラガー酵母のキレを組み合わせた琥珀ラガー。"],
+ ["57","アメリカンスタイル・ダークラガー","American-Style Dark Lager","北米系（ラガー）","ABV 4.1-5.6% | IBU 14-24 | SRM 14-25","濃色ながらボディは軽く、控えめなロースト・カラメル感と高炭酸で飲みやすいラガー。"],
+ ["58","アメリカンスタイル・インディア・ペールラガー","American-Style India Pale Lager (IPL)","北米系（ラガー）","ABV 5.6-7.9% | IBU 50-70 | SRM 3-8","IPAの華やかなホップアロマと苦味を、ラガー酵母による低温発酵の超クリーンなボディで表現。"],
+ ["59","ケルンスタイル・ケルシュ","German-Style Koelsch","ドイツ系（エール）","ABV 4.8-5.3% | IBU 18-25 | SRM 4-6","上面発酵ながら低温熟成させるケルン伝統ビール。繊細な果実香と極めてクリーンなキレ。"],
+ ["60","デュッセルドルフスタイル・アルトビア","German-Style Altbier","ドイツ系（エール）","ABV 4.3-5.5% | IBU 25-52 | SRM 11-19","デュッセルドルフ伝統の銅色エール。トーストモルトのコクとノーブルホップの引き締まった苦味。"],
+ ["61-A","ライプツィヒスタイル・ゴーゼ","Leipzig-Style Gose","ドイツ系（エール）","ABV 4.4-5.4% | IBU 10-15 | SRM 3-9","コリアンダーの香りとほのかな塩味、爽快な乳酸の酸味がクセになる古都ライプツィヒのビール。"],
+ ["61-B","ベルリナースタイル・ヴァイセ","Berliner-Style Weisse","ドイツ系（エール）","ABV 2.8-3.4% | IBU 3-6 | SRM 2-4","乳酸菌によるシャープで爽やかな酸味と低アルコール、非常に軽快なドイツ伝統サワー。"],
+ ["62","スペシャルティ・ベルリーナスタイル・ヴァイセ","Specialty Berliner-Style Weisse","ドイツ系（エール）","ABV 2.8-5.0% | IBU 3-15 | SRM 色は副原料に依存","伝統的ベルリーナ・ヴァイセにフルーツやシロップ、ハーブなどを加えた現代的サワー。"],
+ ["63","コンテンポラリー・ゴーゼ","Contemporary-Style Gose","ドイツ系（エール）","ABV 4.4-5.4% | IBU 5-30 | SRM 3-9","伝統的ゴーゼにフルーツやスパイス、ホップなどを自由に加えた現代的なサワーエール。"],
+ ["64-A","サウスジャーマンスタイル・ヘーフェヴァイツェン","South German-Style Hefeweizen","ドイツ系（エール）","ABV 4.9-5.6% | IBU 10-15 | SRM 3-9","小麦モルト由来の柔らかい口当たりと酵母が生むバナナ・クローブの芳醇な香り。"],
+ ["64-B","サウスジャーマンスタイル・クリスタルヴァイツェン","South German-Style Kristal Weizen","ドイツ系（エール）","ABV 4.9-5.6% | IBU 10-15 | SRM 3-9","酵母を濾過した透明なヴァイツェン。バナナ・クローブの香りとよりクリスプな後味。"],
+ ["64-C","ジャーマンスタイル・ライヒトヴァイツェン","German-Style Leichtes Weizen","ドイツ系（エール）","ABV 2.5-3.5% | IBU 10-15 | SRM 4-10","ヴァイツェンのフルーティな香りを保ちつつ、アルコールとボディを軽くした爽快スタイル。"],
+ ["64-D","サウスジャーマンスタイル・ベルンシュタインヴァイツェン","South German-Style Bernsteinfarbenes Weizen","ドイツ系（エール）","ABV 4.8-5.4% | IBU 10-15 | SRM 9-13","琥珀色のヴァイツェン。カラメルモルトの甘みとバナナ・クローブの香りが調和。"],
+ ["65","サウスジャーマンスタイル・ドゥンケルヴァイツェン","South German-Style Dunkel Weizen","ドイツ系（エール）","ABV 4.8-5.4% | IBU 10-15 | SRM 10-19","濃色モルトのチョコレートやパンの香ばしさとヴァイツェン酵母のエステルが融合。"],
+ ["66","サウスジャーマンスタイル・ヴァイツェンボック","South German-Style Weizenbock","ドイツ系（エール）","ABV 7.0-9.5% | IBU 15-35 | SRM 5-30","ヴァイツェンのハイアルコール版。濃密なモルトの甘みと熟した果実・スパイスの香り。"],
+ ["67","ベルジャンスタイル・ウィットビア","Belgian-Style Witbier","ベルギー・フランス系","ABV 4.8-5.6% | IBU 10-17 | SRM 2-4","小麦とオーツ麦、オレンジピール、コリアンダーを使用。爽やかでシルクのような白ビール。"],
+ ["68","クラシック・フレンチ＆ベルジャンスタイル・セゾン","Classic French & Belgian-Style Saison","ベルギー・フランス系","ABV 5.0-6.8% | IBU 20-38 | SRM 4-14","農家由来の上面発酵ビール。スパイシーでフルーティな酵母香と極めてドライなキレ。"],
+ ["69","スペシャルティ・セゾン","Specialty Saison","ベルギー・フランス系","ABV 5.0-9.3% | IBU 20-40 | SRM 4-20","副原料や特殊ホップ、木樽熟成などを取り入れた多彩な現代風セゾン。"],
+ ["70-A","フレンチスタイル・ビエール・ド・ギャルド","French-Style Biere de Garde","ベルギー・フランス系","ABV 4.4-8.0% | IBU 20-30 | SRM 6-16","北フランス伝統の貯蔵ビール。モルトの豊かなコクとセラーのような落ち着いた熟成感。"],
+ ["70-B","ベルジャンスタイル・スペシャルティエール","Belgian-Style Specialty Ale","ベルギー・フランス系","ABV 4.0-12.0% | IBU 10-50 | SRM 3-35","特定の修道院スタイル等に当てはまらない独自のレシピ・酵母を用いた個性豊かなベルジャンエール。"],
+ ["71-A","ベルジャンスタイル・ペールエール","Belgian-Style Pale Ale","ベルギー・フランス系","ABV 4.1-6.3% | IBU 20-30 | SRM 6-14","銅色でビスケット様のモルト感と穏やかなスパイス香、苦味控えめでバランスが良い。"],
+ ["71-B","ベルジャンスタイル・ブロンドエール","Belgian-Style Blonde Ale","ベルギー・フランス系","ABV 6.0-7.9% | IBU 15-30 | SRM 4-7","黄金色で穏やかなモルトの甘みとベルギー酵母のフルーティ・スパイシーな香り。"],
+ ["72","ベルジャンスタイル・テーブルビア","Belgian-Style Table Beer","ベルギー・フランス系","ABV 0.5-3.5% | IBU 5-20 | SRM 3-25","かつて食卓で日常的に飲まれた低アルコール・ベルジャンビール。軽快ながら酵母の風味が豊か。"],
+ ["73","ベルジャンスタイル・フランダース・アウトブラインまたはアウトレッドエール","Belgian-Style Flanders Oud Bruin or Oud Red Ale","ベルギー・フランス系","ABV 4.8-6.6% | IBU 5-25 | SRM 12-25","木樽熟成によるバルサミコ酢やサクランボのような複雑な酸味とモルトの甘みの融合。"],
+ ["74","ベルジャンスタイル・ランビック／グーズ／フルーツランビック","Belgian-Style Lambic / Gueuze / Fruit Lambic","ベルギー・フランス系","ABV 5.0-8.9% | IBU 11-23 | SRM 6-25","野生酵母による自然発酵ビール。ファンキーな香りと鋭い酸味、果実やブレンドの妙。"],
+ ["75-A","ベルジャンスタイル・デュッベル","Belgian-Style Dubbel","ベルギー・フランス系","ABV 6.3-7.6% | IBU 15-25 | SRM 16-36","修道院ビール伝統の濃色エール。黒糖やレーズンのような甘みとドライな後味。"],
+ ["75-B","ベルジャンスタイル・トリペル","Belgian-Style Tripel","ベルギー・フランス系","ABV 7.1-10.1% | IBU 20-45 | SRM 4-9","黄金色の修道院スタイル。華やかなエステル、白胡椒様のスパイス、高い炭酸で驚くほど軽快。"],
+ ["75-C","ベルジャンスタイル・クァドルペル","Belgian-Style Quadrupel","ベルギー・フランス系","ABV 9.1-14.2% | IBU 25-50 | SRM 8-20","ベルギー修道院ビールの最高峰。濃厚なモルトの甘みとダークフルーツ、力強いアルコール感。"],
+ ["75-D","ベルジャンスタイル・ストロング・ブロンドエール","Belgian-Style Pale Strong Ale","ベルギー・フランス系","ABV 7.1-11.2% | IBU 20-50 | SRM 4-10","淡色ながらハイアルコール。洋梨やリンゴのエステルとドライで軽快な飲み口が特徴。"],
+ ["75-E","ベルジャンスタイル・ストロング・ダークエール","Belgian-Style Dark Strong Ale","ベルギー・フランス系","ABV 7.1-11.2% | IBU 20-50 | SRM 9-35","レーズンやプラムのような濃密な果実香とカラメルの甘み、複雑なスパイス感を持つ重厚ビール。"],
+ ["75-F","その他のベルジャンスタイル・アビィ／トラピストビール","Other Belgian-Style Abbey / Trappist Ale","ベルギー・フランス系","ABV 4.5-12.0% | IBU 15-45 | SRM 4-35","伝統的な修道院（アビィ／トラピスト）の醸造哲学に基づく多彩なベルジャンエール。"],
+ ["76","イングリッシュスタイル・サマーエール","English-Style Summer Ale","イギリス・アイルランド系","ABV 3.7-5.1% | IBU 20-30 | SRM 3-7","淡色で爽快、柑橘や花の香りの英国ホップが効いた夏向けのクリスプなエール。"],
+ ["77","イングリッシュスタイル・ペールマイルドエール","English-Style Pale Mild Ale","イギリス・アイルランド系","ABV 3.2-4.2% | IBU 10-24 | SRM 6-12","淡色で低アルコール、英国産モルトのビスケット感と穏やかなホップのバランスが心地よい。"],
+ ["78-A","オーディナリービター","Ordinary Bitter","イギリス・アイルランド系","ABV 3.0-4.2% | IBU 20-35 | SRM 5-12","穏やかなモルトと英国ホップの土・花のような香り。軽快でドリンカビリティが高い。"],
+ ["78-B","スペシャルビターまたはベストビター","Special Bitter or Best Bitter","イギリス・アイルランド系","ABV 4.2-4.8% | IBU 28-40 | SRM 6-14","オーディナリーよりモルトのコクとホップ苦味がやや強く、バランスの良い英国定番。"],
+ ["79-A","エクストラ・スペシャルビター","Extra Special Bitter (ESB)","イギリス・アイルランド系","ABV 4.8-5.8% | IBU 30-45 | SRM 8-14","リッチなカラメルモルトの甘みとしっかりした苦味が調和するフルボディのビター。"],
+ ["79-B","イングリッシュスタイル・ストロングビター","English-Style Strong Bitter","イギリス・アイルランド系","ABV 5.5-6.5% | IBU 35-55 | SRM 8-16","ESBよりさらにモルトの厚みとホップの苦味・香りを強化した英国ストロングビター。"],
+ ["80","スコティッシュスタイル・エール（ライト／ヘビー／エクスポート）","Scottish-Style Ale (Light / Heavy / Export)","イギリス・アイルランド系","ABV 2.8-5.6% | IBU 9-25 | SRM 8-19","モルトの甘みと香ばしいトースト感が主体でホップ苦味は控えめなスコットランド伝統エール。"],
+ ["81","クラシック・イングリッシュスタイル・ペールエール","Classic English-Style Pale Ale","イギリス・アイルランド系","ABV 4.5-5.5% | IBU 20-40 | SRM 5-12","英国産モルトのビスケット感とアーシーなホップが絶妙に調和する伝統スタイル。"],
+ ["82","イングリッシュスタイル・インディア・ペールエール","English-Style India Pale Ale","イギリス・アイルランド系","ABV 5.0-7.0% | IBU 35-63 | SRM 6-14","英国ホップのハーバルな苦味とモルトの厚みが共存するトラディショナルIPA。"],
+ ["83","イングリッシュスタイル・ブラウンエール","English-Style Brown Ale","イギリス・アイルランド系","ABV 4.2-6.0% | IBU 15-25 | SRM 12-25","ナッツやトースト、キャラメルの甘みが心地よく、ホップ苦味は穏やかなブラウンエール。"],
+ ["84-A","イングリッシュスタイル・ダークマイルドエール","English-Style Dark Mild Ale","イギリス・アイルランド系","ABV 3.2-4.2% | IBU 10-24 | SRM 17-34","濃色ながら軽快で、チョコレートやローストモルトの優しい風味が楽しめるセッション黒。"],
+ ["84-B","ブラウン・ポーター","Brown Porter","イギリス・アイルランド系","ABV 4.5-6.0% | IBU 20-30 | SRM 20-35","ローストの焦げ感は控えめで、チョコレートやカラメルの甘みが引き立つポーター。"],
+ ["85","ロバスト・ポーター","Robust Porter","イギリス・アイルランド系","ABV 5.1-6.6% | IBU 25-40 | SRM 30+","シャープなロースト香とビターチョコの風味、しっかりしたホップ苦味を持つポーター。"],
+ ["86","スイート・スタウトまたはクリーム・スタウト","Sweet Stout or Cream Stout","イギリス・アイルランド系","ABV 3.2-6.3% | IBU 15-25 | SRM 40+","乳糖（ラクトース）やモルト由来のまろやかな甘みとコーヒーの香ばしさが調和。"],
+ ["87","オートミール・スタウト","Oatmeal Stout","イギリス・アイルランド系","ABV 3.8-6.1% | IBU 20-40 | SRM 20+","オーツ麦によるシルクのように滑らかな口当たりとローストナッツの香ばしさ。"],
+ ["88","ブリティッシュスタイル・インペリアル・スタウト","British-Style Imperial Stout","イギリス・アイルランド系","ABV 7.0-12.0% | IBU 45-65 | SRM 40+","ローストモルトの圧倒的なコクとダークフルーツの香り、重厚なフルボディ。"],
+ ["89","オールド・エール","Old Ale","イギリス・アイルランド系","ABV 6.3-9.1% | IBU 30-65 | SRM 12-30","熟成によるシェリーやダークフルーツのような複雑な風味とリッチなモルトボディ。"],
+ ["90-A","ブリティッシュスタイル・バーレーワイン","British-Style Barley Wine Ale","イギリス・アイルランド系","ABV 8.5-12.2% | IBU 40-65 | SRM 14-22","濃密なカラメルやトフィーの甘みと芳醇なエステルが主役の重厚な長期熟成ビール。"],
+ ["90-B","ストロング・エール","Strong Ale","イギリス・アイルランド系","ABV 7.0-11.3% | IBU 30-65 | SRM 8-21","濃厚なモルトの甘み、ドライフルーツ様のエステル、温かみのあるアルコール感。"],
+ ["91","アイリッシュスタイル・レッドエール","Irish-Style Red Ale","イギリス・アイルランド系","ABV 4.0-4.8% | IBU 20-28 | SRM 11-18","美しいルビー色。カラメルモルトの甘みとフィニッシュのわずかなローストのキレ。"],
+ ["92-A","クラシック・アイリッシュスタイル・ドライスタウト","Classic Irish-Style Dry Stout","イギリス・アイルランド系","ABV 4.1-5.3% | IBU 30-40 | SRM 40+","ローストバーレイのドライな苦味とクリーミーな泡。軽快でキレのある黒ビール。"],
+ ["92-B","アイリッシュスタイル・ドライスタウト（高濃度）","Irish-Style Dry Stout (Export)","イギリス・アイルランド系","ABV 5.0-6.5% | IBU 30-50 | SRM 40+","クラシックより飲みごたえとローストの香ばしさを強めたドライスタウト。"],
+ ["93","フォーリン・エクスポートスタイル・スタウト","Foreign-Style Stout","イギリス・アイルランド系","ABV 5.7-8.9% | IBU 35-70 | SRM 40+","ドライスタウトよりアルコール・コク・ロースト感が強化されたリッチなスタウト。"],
+ ["94","アイリッシュスタイル・クリームエール","Irish-Style Cream Ale","イギリス・アイルランド系","ABV 4.2-5.5% | IBU 15-28 | SRM 4-10","滑らかな口当たりとほのかなモルトの甘み、クリーンな後味を持つアイルランド風エール。"],
+ ["95-A","アンピーテッド・スコッチエール","Unpeated Scotch Ale (Wee Heavy)","イギリス・アイルランド系","ABV 6.6-8.5% | IBU 25-35 | SRM 15-30","ピート燻製を使わず、煮詰められたモルトの濃厚なカラメル・トフィーの甘みを追求した重厚ビール。"],
+ ["95-B","ピーテッド・スコッチエール","Peated Scotch Ale (Wee Heavy)","イギリス・アイルランド系","ABV 6.6-8.5% | IBU 25-35 | SRM 15-30","ピート（泥炭）燻製モルト由来のスモーキーな香りと濃厚なモルトの甘みが融合したスコッチエール。"],
+ ["96","ゴールデンまたはブロンドエール","Golden or Blonde Ale","北米系（エール）","ABV 4.1-5.1% | IBU 15-25 | SRM 3-7","黄金色でクリーン、モルトとホップが穏やかにバランスする親しみやすいエール。"],
+ ["97-A","アメリカンスタイル・ペールエール","American-Style Pale Ale","北米系（エール）","ABV 4.5-5.6% | IBU 30-50 | SRM 6-14","アメリカンホップの柑橘・花・松の香りと軽快なモルトのバランスが絶妙な定番。"],
+ ["97-B","クラシック・アメリカンスタイル・ペールエール","Classic American-Style Pale Ale","北米系（エール）","ABV 4.5-5.6% | IBU 30-45 | SRM 6-14","カラメルモルトのコクと伝統的アメリカンホップの松・柑橘感が調和する王道APA。"],
+ ["98","ジューシーまたはヘイジー・ペールエール","Juicy or Hazy Pale Ale","北米系（エール）","ABV 4.5-5.6% | IBU 20-40 | SRM 4-7","濁りのある外観とトロピカル・シトラスの爆発的な香り、苦味を抑えた柔らかい口当たり。"],
+ ["99","アメリカンスタイル・ストロング・ペールエール","American-Style Strong Pale Ale","北米系（エール）","ABV 5.6-7.0% | IBU 40-50 | SRM 6-14","通常のAPAよりモルトとホップの主張が強く、IPAに迫る飲みごたえを持つ。"],
+ ["100","ジューシーまたはヘイジー・ストロング・ペールエール","Juicy or Hazy Strong Pale Ale","北米系（エール）","ABV 5.6-7.0% | IBU 25-45 | SRM 4-8","ヘイジーペールエールのアルコールとホップアロマを強化したジューシーなストロングエール。"],
+ ["101-A","アメリカンスタイル・インディア・ペールエール","American-Style India Pale Ale","北米系（エール）","ABV 6.3-7.5% | IBU 50-70 | SRM 6-14","柑橘・松脂・トロピカルなホップアロマと鋭くクリーンな苦味。クラフトビールの王道。"],
+ ["101-B","ウエストコーストスタイル・インディア・ペールエール","West Coast-Style India Pale Ale","北米系（エール）","ABV 6.3-7.5% | IBU 50-75 | SRM 4-10","極めてクリアでドライ。松やグレープフルーツの鮮烈なホップ感と引き締まった苦味。"],
+ ["102","ジューシーまたはヘイジー・インディア・ペールエール","Juicy or Hazy India Pale Ale","北米系（エール）","ABV 6.3-7.5% | IBU 25-50 | SRM 4-8","白濁した外観とマンゴー・パッションフルーツのような濃厚アロマ、滑らかで低苦味な口当たり。"],
+ ["103","エマージング・インディア・ペールエール","Emerging India Pale Ale","北米系（エール）","ABV 5.5-8.0% | IBU 30-75 | SRM 3-35","ブリュットIPA、コールドIPA、ブラックIPA、ホワイトIPAなど新世代の革新的IPA群。"],
+ ["104-A","アメリカンスタイル・インペリアル／ダブルIPA","American-Style Imperial or Double IPA","北米系（エール）","ABV 7.6-10.6% | IBU 65-100 | SRM 5-13","ホップの香りと苦味を極限まで高めたハイアルコールIPA。クリーンで飲みごたえ抜群。"],
+ ["104-B","ジューシーまたはヘイジー・インペリアル／ダブルIPA","Juicy or Hazy Imperial or Double IPA","北米系（エール）","ABV 7.6-10.6% | IBU 30-60 | SRM 4-8","濃厚な果汁感とシルクのようなボディを持つハイアルコール版ヘイジーIPA。"],
+ ["105","アメリカンスタイル・バーレーワイン／ウィートワイン","American-Style Barley Wine / Wheat Wine Ale","北米系（エール）","ABV 8.5-12.2% | IBU 45-100 | SRM 8-18","濃厚なモルトの甘みとハイアルコールに、アメリカンホップの強烈な苦味と香りが拮抗。"],
+ ["106","アメリカンスタイル・アンバー／レッドエール","American-Style Amber/Red Ale","北米系（エール）","ABV 4.4-6.1% | IBU 25-45 | SRM 11-18","カラメルモルトの甘みとコクに、アメリカンホップの華やかな香りと苦味がマッチ。"],
+ ["107","インペリアル・レッドエール","Imperial Red Ale","北米系（エール）","ABV 7.9-10.5% | IBU 55-85 | SRM 11-18","濃厚なカラメルモルトと強力なホップの苦味・香りがぶつかり合うハイアルコールエール。"],
+ ["108","アメリカンスタイル・ブラウンエール","American-Style Brown Ale","北米系（エール）","ABV 4.2-6.3% | IBU 25-45 | SRM 15-26","チョコレート・カラメルモルトの風味に、シトラス系ホップのキレを加えた北米風ブラウン。"],
+ ["109-A","アメリカンスタイル・ポーター／インペリアルポーター","American-Style Porter / Imperial Porter","北米系（エール）","ABV 5.1-12.0% | IBU 25-50 | SRM 30+","チョコやカラメルのリッチな風味にアメリカンホップのキレを加えた北米風ポーター。"],
+ ["109-B","アメリカンスタイル・スタウト","American-Style Stout","北米系（エール）","ABV 5.7-8.9% | IBU 35-60 | SRM 40+","強いロースト香・コーヒー感に、アメリカンホップの柑橘や松の風味が重なる力強い黒。"],
+ ["110","アメリカンスタイル・インペリアル・スタウト","American-Style Imperial Stout","北米系（エール）","ABV 7.0-12.0% | IBU 50-80 | SRM 40+","圧倒的なロースト感、濃厚な甘み、強いホップ苦味とハイアルコールが融合する最高峰。"],
+ ["111","フリースタイル・ライトラガー","Free-Style Light Lager","フリースタイル","ABV 2.5-6.9% | IBU 自由 | SRM 1-14","既存スタイルにとらわれずブルワーの独創性を発揮した淡色・下面発酵（7.0%未満）のビール。"],
+ ["112","フリースタイル・ダークラガー","Free-Style Dark Lager","フリースタイル","ABV 2.5-6.9% | IBU 自由 | SRM 15+","既存スタイルにとらわれずブルワーの独創性を発揮した濃色・下面発酵（7.0%未満）のビール。"],
+ ["113","フリースタイル・ライトエール","Free-Style Light Ale","フリースタイル","ABV 2.5-6.9% | IBU 自由 | SRM 1-14","既存スタイルにとらわれずブルワーの独創性を発揮した淡色・上面発酵（7.0%未満）のビール。"],
+ ["114","フリースタイル・ダークエール","Free-Style Dark Ale","フリースタイル","ABV 2.5-6.9% | IBU 自由 | SRM 15+","既存スタイルにとらわれずブルワーの独創性を発揮した濃色・上面発酵（7.0%未満）のビール。"],
+ ["115","フリースタイル・ハイアルコール・ライトラガー","Free-Style High-Alcohol Light Lager","フリースタイル","ABV 7.0-15.0% | IBU 自由 | SRM 1-14","既存スタイルにとらわれずブルワーの独創性を発揮した淡色・下面発酵（7.0%以上）のビール。"],
+ ["116","フリースタイル・ハイアルコール・ダークラガー","Free-Style High-Alcohol Dark Lager","フリースタイル","ABV 7.0-15.0% | IBU 自由 | SRM 15+","既存スタイルにとらわれずブルワーの独創性を発揮した濃色・下面発酵（7.0%以上）のビール。"],
+ ["117","フリースタイル・ハイアルコール・ライトエール","Free-Style High-Alcohol Light Ale","フリースタイル","ABV 7.0-15.0% | IBU 自由 | SRM 1-14","既存スタイルにとらわれずブルワーの独創性を発揮した淡色・上面発酵（7.0%以上）のビール。"],
+ ["118","フリースタイル・ハイアルコール・ダークエール","Free-Style High-Alcohol Dark Ale","フリースタイル","ABV 7.0-15.0% | IBU 自由 | SRM 15+","既存スタイルにとらわれずブルワーの独創性を発揮した濃色・上面発酵（7.0%以上）のビール。"]
+];
+
+const STYLES_114 = RAW_2404_STYLES.map(s => ({
+ id: s[0], nameJa: s[1], nameEn: s[2], cat: s[3], specs: s[4], desc: s[5]
+}));
+
+let state = {
+ mode: 'subjective',
+ theme: 'dark',
+ cardFrame: 'focus',
+ quickStyle: QUICK_STYLES[0].name,
+ axesVals: [...QUICK_STYLES[0].vals],
+ judgingStyle: STYLES_114[141],
+ deductions: { app: [], aro: [], fla: [], mou: [] },
+ selectedTags: ['シトラス・柑橘', '松脂・ダンク'],
+ photoDataUrl: null,
+ photoImgObj: null,
+ historyFilter: 'all',
+ historyGrid: false,
+ modalCategory: 'すべて'
+};
+
+const THEMES = [
+ { id: 'dark', label: 'Dark', bg: '#0f1115', card: '#181b21', text: '#f3f4f6', accent: '#f59e0b' },
+ { id: 'light', label: 'Light', bg: '#f8f7f4', card: '#ffffff', text: '#1f2937', accent: '#15803d' },
+ { id: 'navy', label: 'Navy', bg: '#0b132b', card: '#1c2541', text: '#f8fafc', accent: '#eab308' },
+ { id: 'mono', label: 'Mono', bg: '#ffffff', card: '#f9fafb', text: '#111827', accent: '#18181b' }
+];
+
+// Multi-tier Storage (IndexedDB -> localStorage -> in-memory fallback for restricted content:// WebViews)
+let db = null;
+let memoryRecords = [];
+const DB_NAME = 'BeerTastingNoteDB';
+const STORE_NAME = 'records';
+
+function initDBWithTimeout() {
+ return new Promise(resolve => {
+ let settled = false;
+ const done = (val) => {
+ if (!settled) { settled = true; resolve(val); }
+ };
+ setTimeout(() => done(null), 500);
+ try {
+ if (!window.indexedDB) { done(null); return; }
+ const req = indexedDB.open(DB_NAME, 1);
+ req.onupgradeneeded = e => {
+ try {
+ const d = e.target.result;
+ if (!d.objectStoreNames.contains(STORE_NAME)) {
+ d.createObjectStore(STORE_NAME, { keyPath: 'id' });
+ }
+ } catch (err) {}
+ };
+ req.onsuccess = e => { db = e.target.result; done(db); };
+ req.onerror = () => done(null);
+ req.onblocked = () => done(null);
+ } catch (e) {
+ done(null);
+ }
+ });
+}
+
+function safeLocalGet() {
+ try {
+ const raw = window.localStorage.getItem('btn_records');
+ return raw ? JSON.parse(raw) : null;
+ } catch (e) {
+ return null;
+ }
+}
+
+function safeLocalSet(list) {
+ try {
+ window.localStorage.setItem('btn_records', JSON.stringify(list));
+ return true;
+ } catch (e) {
+ return false;
+ }
+}
+
+// Render UI immediately and synchronously on startup — never wait on storage!
+function bootstrapApp() {
+ renderQuickStyles();
+ renderSliders();
+ renderDeductionChips();
+ renderFlavorTags();
+ bindInputs();
+ updateJudging();
+ drawShareCard();
+ initDBWithTimeout();
+}
+
+if (document.readyState === 'loading') {
+ document.addEventListener('DOMContentLoaded', bootstrapApp);
+} else {
+ bootstrapApp();
+}
+
+function bindInputs() {
+ ['beerName', 'breweryName', 'venueName', 'abvIbu', 'tastingComment'].forEach(id => {
+ const el = document.getElementById(id);
+ if (el) el.addEventListener('input', () => { drawShareCard(); scheduleDraftSave(); });
+ });
+ document.addEventListener('click', (e) => {
+ const wrap = document.getElementById('judgingDropdownWrap');
+ if (wrap && !wrap.contains(e.target)) {
+ document.getElementById('judgingStyleDropdown').classList.add('hidden');
+ }
+ });
+}
+
+function cycleTheme() {
+ const idx = (THEMES.findIndex(t => t.id === state.theme) + 1) % THEMES.length;
+ state.theme = THEMES[idx].id;
+ document.body.setAttribute('data-theme', state.theme);
+ document.getElementById('themeLabel').textContent = THEMES[idx].label;
+ drawShareCard();
+ scheduleDraftSave();
+}
+
+function setMode(mode) {
+ state.mode = mode;
+ const subBtn = document.getElementById('btn-mode-subjective');
+ const judBtn = document.getElementById('btn-mode-judging');
+ const subSec = document.getElementById('section-subjective');
+ const judSec = document.getElementById('section-judging');
+ const judOve = document.getElementById('judgingOverallBox');
+
+ if (mode === 'subjective') {
+ subBtn.classList.add('active');
+ judBtn.classList.remove('active');
+ subSec.classList.remove('hidden');
+ judSec.classList.add('hidden');
+ judOve.classList.add('hidden');
+ } else {
+ judBtn.classList.add('active');
+ subBtn.classList.remove('active');
+ judSec.classList.remove('hidden');
+ subSec.classList.add('hidden');
+ judOve.classList.remove('hidden');
+ }
+ drawShareCard();
+ scheduleDraftSave();
+}
+
+function renderQuickStyles() {
+ const grid = document.getElementById('quickStyleGrid');
+ grid.innerHTML = QUICK_STYLES.map(s => {
+ const active = s.name === state.quickStyle;
+ return `<button type="button" onclick="selectQuickStyle('${s.name}')" class="chip ${active ? 'active' : ''}">${s.name}</button>`;
+ }).join('');
+}
+
+function selectQuickStyle(name) {
+ const found = QUICK_STYLES.find(s => s.name === name);
+ if (!found) return;
+ state.quickStyle = found.name;
+ state.axesVals = [...found.vals];
+ document.getElementById('selectedQuickStyleLabel').textContent = found.name;
+ renderQuickStyles();
+ renderSliders();
+ drawShareCard();
+ scheduleDraftSave();
+}
+
+function renderSliders() {
+ const cont = document.getElementById('slidersContainer');
+ cont.innerHTML = AXES.map((ax, i) => `
+ <div>
+ <div class="slider-row-head">
+ <span>${ax}</span>
+ <span id="axVal-${i}" class="accent-label">${state.axesVals[i].toFixed(1)}</span>
+ </div>
+ <input type="range" min="1" max="5" step="0.5" value="${state.axesVals[i]}" oninput="updateAxis(${i}, this.value)" />
+ </div>
+ `).join('');
+}
+
+function updateAxis(idx, val) {
+ state.axesVals[idx] = parseFloat(val);
+ document.getElementById(`axVal-${idx}`).textContent = state.axesVals[idx].toFixed(1);
+ drawShareCard();
+ scheduleDraftSave();
+}
+
+function updateSubjective() {
+ const val = parseFloat(document.getElementById('overallRating').value).toFixed(1);
+ document.getElementById('overallRatingVal').textContent = `${val} / 5.0`;
+ drawShareCard();
+ scheduleDraftSave();
+}
+
+function renderDeductionChips() {
+ Object.keys(DEDUCTION_OPTIONS).forEach(cat => {
+ const cont = document.getElementById(`deduct-${cat}`);
+ if (!cont) return;
+ cont.innerHTML = DEDUCTION_OPTIONS[cat].map(label => {
+ const active = (state.deductions[cat] || []).includes(label);
+ return `<button type="button" onclick="toggleDeduction('${cat}', '${label}')" class="chip ${active ? 'active' : ''}" style="padding:3px 7px;font-size:10px;">${label}</button>`;
+ }).join('');
+ });
+}
+
+function toggleDeduction(cat, label) {
+ const arr = state.deductions[cat] || [];
+ if (arr.includes(label)) {
+ state.deductions[cat] = arr.filter(x => x !== label);
+ } else {
+ state.deductions[cat] = [...arr, label];
+ }
+ renderDeductionChips();
+ drawShareCard();
+ scheduleDraftSave();
+}
+
+function getAllDeductionsList() {
+ return [
+ ...(state.deductions.app || []),
+ ...(state.deductions.aro || []),
+ ...(state.deductions.fla || []),
+ ...(state.deductions.mou || [])
+ ];
+}
+
+function updateJudging() {
+ const app = parseInt(document.getElementById('score-app').value);
+ const aro = parseInt(document.getElementById('score-aro').value);
+ const fla = parseInt(document.getElementById('score-fla').value);
+ const mou = parseInt(document.getElementById('score-mou').value);
+ const ove = parseInt(document.getElementById('score-ove').value);
+
+ document.getElementById('val-app').textContent = `${app} / 6`;
+ document.getElementById('val-aro').textContent = `${aro} / 12`;
+ document.getElementById('val-fla').textContent = `${fla} / 20`;
+ document.getElementById('val-mou').textContent = `${mou} / 5`;
+ document.getElementById('val-ove').textContent = `${ove} / 7`;
+ document.getElementById('judgingTotalScore').textContent = app + aro + fla + mou + ove;
+ drawShareCard();
+ scheduleDraftSave();
+}
+
+function renderFlavorTags() {
+ const cont = document.getElementById('flavorTagsContainer');
+ cont.innerHTML = FLAVOR_TAGS.map(t => {
+ const active = state.selectedTags.includes(t);
+ return `<button type="button" onclick="toggleFlavorTag('${t}')" class="chip rounded ${active ? 'active' : ''}">${t}</button>`;
+ }).join('');
+}
+
+function toggleFlavorTag(tag) {
+ if (state.selectedTags.includes(tag)) {
+ state.selectedTags = state.selectedTags.filter(t => t !== tag);
+ } else {
+ state.selectedTags.push(tag);
+ }
+ renderFlavorTags();
+ drawShareCard();
+ scheduleDraftSave();
+}
+
+function triggerPhotoSelect() {
+ const inp = document.getElementById('photoInput');
+ if (inp) inp.click();
+}
+
+function triggerImportJSON() {
+ const inp = document.getElementById('jsonImportInput');
+ if (inp) inp.click();
+}
+
+async function handlePhoto(e) {
+ const input = e.target;
+ const file = input.files && input.files[0];
+ if (!file) return;
+
+ const prev = document.getElementById('photoPreview');
+ const placeholder = document.getElementById('photoPlaceholder');
+
+ const showDiagnosticError = (reason, detail) => {
+ prev.classList.add('hidden');
+ placeholder.classList.remove('hidden');
+ alert(
+ `写真を表示できませんでした。\n` +
+ `【原因】${reason}\n` +
+ `【詳細】${detail}\n` +
+ `【ファイル】${file.name || '不明'} (${file.type || 'typeなし'} / ${file.size} bytes)`
+ );
+ };
+
+ const finalizePhoto = (imgElement, dataUrlString) => {
+ state.photoImgObj = imgElement;
+ state.photoDataUrl = dataUrlString || null;
+ if (dataUrlString) {
+ prev.src = dataUrlString;
+ } else if (imgElement && imgElement.src) {
+ prev.src = imgElement.src;
+ }
+ prev.classList.remove('hidden');
+ placeholder.classList.add('hidden');
+ drawShareCard();
+ scheduleDraftSave();
+ };
+
+ const resizeToDataUrl = (source, w0, h0) => {
+ const max = 1200;
+ let w = w0, h = h0;
+ if (w > max || h > max) {
+ if (w > h) { h = Math.round(h * max / w); w = max; }
+ else { w = Math.round(w * max / h); h = max; }
+ }
+ const c = document.createElement('canvas');
+ c.width = w;
+ c.height = h;
+ c.getContext('2d').drawImage(source, 0, 0, w, h);
+ return c.toDataURL('image/jpeg', 0.85);
+ };
+
+ const detectMimeFromBytes = (u8) => {
+ if (u8.length < 12) return null;
+ if (u8[0] === 0xFF && u8[1] === 0xD8 && u8[2] === 0xFF) return 'image/jpeg';
+ if (u8[0] === 0x89 && u8[1] === 0x50 && u8[2] === 0x4E && u8[3] === 0x47) return 'image/png';
+ if (u8[0] === 0x47 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x38) return 'image/gif';
+ if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46 &&
+ u8[8] === 0x57 && u8[9] === 0x45 && u8[10] === 0x42 && u8[11] === 0x50) return 'image/webp';
+ const box = String.fromCharCode(u8[4], u8[5], u8[6], u8[7]);
+ const brand = String.fromCharCode(u8[8], u8[9], u8[10], u8[11]);
+ if (box === 'ftyp' && (brand.startsWith('hei') || brand.startsWith('hev') || brand === 'mif1' || brand === 'msf1')) {
+ return 'image/heic';
+ }
+ if (box === 'ftyp' && brand.startsWith('avi')) return 'image/avif';
+ return null;
+ };
+
+ const bytesToBase64 = (u8) => {
+ let bin = '';
+ const chunk = 0x8000;
+ for (let i = 0; i < u8.length; i += chunk) {
+ bin += String.fromCharCode.apply(null, u8.subarray(i, i + chunk));
+ }
+ return btoa(bin);
+ };
+
+ if (file.size === 0) {
+ input.value = '';
+ showDiagnosticError('ファイルサイズが0バイトです', 'クラウド上の写真が未ダウンロードの可能性があります。写真アプリで一度開いてから選択するか、別の写真をお試しください。');
+ return;
+ }
+
+ // Stage 1: Native ObjectURL -> Image (Best for iOS Safari: natively decodes HEIC, JPEG, PNG, WebP + handles EXIF orientation)
+ try {
+ const objUrl = URL.createObjectURL(file);
+ const nativeImg = await new Promise((resolve, reject) => {
+ const im = new Image();
+ im.onload = () => {
+ if ((im.naturalWidth || im.width) > 0) resolve(im);
+ else reject(new Error('Zero dimensions'));
+ };
+ im.onerror = () => reject(new Error('ObjectURL decode error'));
+ im.src = objUrl;
+ });
+
+ let compressed = null;
+ try {
+ compressed = resizeToDataUrl(nativeImg, nativeImg.naturalWidth || nativeImg.width, nativeImg.naturalHeight || nativeImg.height);
+ } catch (cErr) {}
+
+ if (compressed && compressed.length > 200) {
+ const cleanImg = await new Promise((res, rej) => {
+ const im = new Image();
+ im.onload = () => res(im);
+ im.onerror = rej;
+ im.src = compressed;
+ });
+ URL.revokeObjectURL(objUrl);
+ input.value = '';
+ finalizePhoto(cleanImg, compressed);
+ return;
+ } else {
+ input.value = '';
+ finalizePhoto(nativeImg, objUrl);
+ return;
+ }
+ } catch (stage1Err) {
+ // Stage 1 blocked or unsupported (e.g., Android content:// WebView blob restriction) -> proceed to Stage 2
+ }
+
+ // Stage 2: Raw ArrayBuffer + Magic-Byte MIME Detection (Best for Android content:// WebViews)
+ let detectedMime = null;
+ try {
+ const buf = await new Promise((resolve, reject) => {
+ if (file.arrayBuffer) {
+ file.arrayBuffer().then(resolve).catch(() => {
+ const r = new FileReader();
+ r.onload = () => resolve(r.result);
+ r.onerror = () => reject(r.error || new Error('FileReader error'));
+ r.readAsArrayBuffer(file);
+ });
+ } else {
+ const r = new FileReader();
+ r.onload = () => resolve(r.result);
+ r.onerror = () => reject(r.error || new Error('FileReader error'));
+ r.readAsArrayBuffer(file);
+ }
+ });
+
+ const u8 = new Uint8Array(buf);
+ detectedMime = detectMimeFromBytes(u8);
+ const mime = detectedMime || (file.type && file.type.startsWith('image/') ? file.type : 'image/jpeg');
+
+ const cleanBlob = new Blob([u8], { type: mime });
+ if (window.createImageBitmap) {
+ try {
+ const bitmap = await createImageBitmap(cleanBlob);
+ const compressed = resizeToDataUrl(bitmap, bitmap.width, bitmap.height);
+ bitmap.close();
+ if (compressed && compressed.length > 200) {
+ const loadedImg = await new Promise((res, rej) => {
+ const im = new Image();
+ im.onload = () => res(im);
+ im.onerror = rej;
+ im.src = compressed;
+ });
+ input.value = '';
+ finalizePhoto(loadedImg, compressed);
+ return;
+ }
+ } catch (bmErr) {}
+ }
+
+ const rawDataUrl = `data:${mime};base64,${bytesToBase64(u8)}`;
+ const decodedImg = await new Promise((res, rej) => {
+ const im = new Image();
+ im.onload = () => {
+ if ((im.naturalWidth || im.width) > 0) res(im);
+ else rej(new Error('Image width is 0'));
+ };
+ im.onerror = () => rej(new Error('Image decode failed'));
+ im.src = rawDataUrl;
+ });
+
+ let finalUrl = rawDataUrl;
+ try {
+ const comp = resizeToDataUrl(decodedImg, decodedImg.naturalWidth || decodedImg.width, decodedImg.naturalHeight || decodedImg.height);
+ if (comp && comp.length > 200) finalUrl = comp;
+ } catch (e2) {}
+
+ input.value = '';
+ finalizePhoto(decodedImg, finalUrl);
+ } catch (stage2Err) {
+ input.value = '';
+ if (detectedMime === 'image/heic' || (file.name && /\.heic$/i.test(file.name))) {
+ showDiagnosticError('このブラウザ環境ではHEIC形式の画像を直接デコードできません', 'JPEGまたはPNG形式の画像を選択するか、スクリーンショット等をお試しください。');
+ } else {
+ showDiagnosticError('画像の読み込みまたはデコードに失敗しました', String(stage2Err && stage2Err.message ? stage2Err.message : stage2Err));
+ }
+ }
+}
+
+function filterJudgingStyleDropdown() {
+ const q = document.getElementById('judgingStyleSearch').value.toLowerCase().trim();
+ const dd = document.getElementById('judgingStyleDropdown');
+ const matches = STYLES_114.filter(s =>
+ s.id.includes(q) || s.nameJa.toLowerCase().includes(q) || s.nameEn.toLowerCase().includes(q)
+ ).slice(0, 25);
+
+ if (!matches.length) { dd.classList.add('hidden'); return; }
+ dd.innerHTML = matches.map(s => `
+ <div onclick="selectJudgingStyle('${s.id}')" class="dropdown-item">
+ <div style="font-weight:700;"><span class="accent-label">${s.id}.</span> ${s.nameJa}</div>
+ <div style="font-size:10px;color:var(--text-muted);">${s.nameEn}</div>
+ </div>
+ `).join('');
+ dd.classList.remove('hidden');
+}
+
+function selectJudgingStyle(id) {
+ const s = STYLES_114.find(x => x.id === id);
+ if (!s) return;
+ state.judgingStyle = s;
+ document.getElementById('jgStyleTitle').textContent = `${s.id}. ${s.nameJa}`;
+ document.getElementById('jgStyleSpecs').textContent = s.specs;
+ document.getElementById('jgStyleDesc').textContent = s.desc;
+ document.getElementById('judgingStyleDropdown').classList.add('hidden');
+ document.getElementById('judgingStyleSearch').value = '';
+ drawShareCard();
+ updateGuidelineLinks();
+}
+
+function openStyleModal() {
+ document.getElementById('styleModal').classList.remove('hidden');
+ renderModalCategories();
+ renderModalStyles();
+}
+function closeStyleModal() {
+ document.getElementById('styleModal').classList.add('hidden');
+}
+
+function renderModalCategories() {
+ const cats = ['すべて', ...new Set(STYLES_114.map(s => s.cat))];
+ document.getElementById('modalCategoryTabs').innerHTML = cats.map(c => `
+ <button type="button" onclick="setModalCat('${c}')" class="chip ${state.modalCategory === c ? 'active' : ''}" style="white-space:nowrap;">${c}</button>
+ `).join('');
+}
+
+function setModalCat(c) {
+ state.modalCategory = c;
+ renderModalCategories();
+ renderModalStyles();
+}
+
+function renderModalStyles() {
+ const q = document.getElementById('modalStyleSearch').value.toLowerCase().trim();
+ const list = STYLES_114.filter(s => {
+ const catOk = state.modalCategory === 'すべて' || s.cat === state.modalCategory;
+ const qOk = !q || s.id.includes(q) || s.nameJa.toLowerCase().includes(q) || s.nameEn.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q);
+ return catOk && qOk;
+ });
+
+ document.getElementById('modalStyleList').innerHTML = list.map(s => `
+ <div style="background:var(--bg-input);border:1px solid var(--border-color);border-radius:12px;padding:10px;">
+ <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+ <span style="font-weight:700;font-size:12px;"><span class="accent-label">${s.id}.</span> ${s.nameJa}</span>
+ <span style="font-size:10px;padding:2px 6px;border-radius:6px;background:var(--bg-card);border:1px solid var(--border-color);flex-shrink:0;">${s.cat}</span>
+ </div>
+ <div style="font-size:10px;color:var(--text-muted);margin:3px 0;">${s.nameEn} | ${s.specs}</div>
+ <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">${s.desc}</p>
+ <div style="display:flex;gap:6px;">
+ <button type="button" onclick="openStyleDetailModal('${s.id}')" class="chip" style="font-size:10px;padding:4px 8px;">📋 項目別基準・Web原文</button>
+ <button type="button" onclick="applyModalStyle('${s.id}')" class="chip active" style="font-size:10px;padding:4px 8px;">審査にセット</button>
+ </div>
+ </div>
+ `).join('');
+}
+
+function applyModalStyle(id) {
+ selectJudgingStyle(id);
+ setMode('judging');
+ closeStyleModal();
+}
+
+function setCardFrame(frame) {
+ state.cardFrame = frame;
+ document.querySelectorAll('.frame-btn').forEach(b => b.classList.remove('active'));
+ document.getElementById(`frame-${frame}`).classList.add('active');
+ drawShareCard();
+ scheduleDraftSave();
+}
+
+function drawRoundedRectPath(ctx, x, y, w, h, r) {
+ ctx.beginPath();
+ ctx.moveTo(x + r, y);
+ ctx.arcTo(x + w, y, x + w, y + h, r);
+ ctx.arcTo(x + w, y + h, x, y + h, r);
+ ctx.arcTo(x, y + h, x, y, r);
+ ctx.arcTo(x, y, x + w, y, r);
+ ctx.closePath();
+}
+
+function drawShareCard() {
+ const canvas = document.getElementById('shareCanvas');
+ if (!canvas) return;
+ const ctx = canvas.getContext('2d');
+ const W = 1080, H = 1080;
+ const themeObj = THEMES.find(t => t.id === state.theme) || THEMES[0];
+
+ const beerName = document.getElementById('beerName').value.trim() || 'Untitled Craft Beer';
+ const brewery = document.getElementById('breweryName').value.trim() || 'Craft Brewery';
+ const venue = document.getElementById('venueName').value.trim();
+ const comment = document.getElementById('tastingComment').value.trim();
+ const styleLabel = state.mode === 'subjective' ? state.quickStyle : `${state.judgingStyle.id}. ${state.judgingStyle.nameJa}`;
+ const scoreText = state.mode === 'subjective'
+ ? `★ ${parseFloat(document.getElementById('overallRating').value).toFixed(1)}`
+ : `${document.getElementById('judgingTotalScore').textContent} / 50`;
+
+ const deductList = getAllDeductionsList();
+ const tagLine = state.selectedTags.slice(0, 3).map(t => `#${t}`).join(' ');
+ const deductLine = (state.mode === 'judging' && deductList.length) ? `減点要素: ${deductList.slice(0, 3).join(' / ')}` : '';
+
+ const renderContent = (img) => {
+ ctx.fillStyle = themeObj.bg;
+ ctx.fillRect(0, 0, W, H);
+
+ if (state.cardFrame === 'focus') {
+ if (img) drawCoverImage(ctx, img, 0, 0, W, H);
+ else drawFallbackPattern(ctx, 0, 0, W, H, themeObj);
+
+ const grad = ctx.createLinearGradient(0, H * 0.56, 0, H);
+ grad.addColorStop(0, 'rgba(0,0,0,0)');
+ grad.addColorStop(1, 'rgba(0,0,0,0.84)');
+ ctx.fillStyle = grad;
+ ctx.fillRect(0, H * 0.52, W, H * 0.48);
+
+ const focusAccent = (state.theme === 'mono') ? '#fbbf24' : themeObj.accent;
+
+ ctx.save();
+ ctx.shadowColor = 'rgba(0,0,0,0.85)';
+ ctx.shadowBlur = 14;
+ ctx.fillStyle = focusAccent;
+ ctx.font = '800 28px sans-serif';
+ ctx.fillText(truncateText(ctx, styleLabel.toUpperCase(), 660), 54, 755);
+
+ ctx.fillStyle = '#ffffff';
+ ctx.font = '900 56px sans-serif';
+ ctx.fillText(truncateText(ctx, beerName, 640), 54, 825);
+
+ ctx.fillStyle = '#e5e7eb';
+ ctx.font = '600 30px sans-serif';
+ ctx.fillText(truncateText(ctx, brewery + (venue ? ` @ ${venue}` : ''), 640), 54, 875);
+
+ ctx.fillStyle = focusAccent;
+ ctx.font = '900 44px sans-serif';
+ ctx.fillText(scoreText, 54, 950);
+
+ ctx.fillStyle = '#d1d5db';
+ ctx.font = '600 23px sans-serif';
+ ctx.fillText(truncateText(ctx, deductLine || tagLine, 650), 54, 1012);
+ ctx.restore();
+
+ if (state.mode === 'subjective') {
+ drawPentagon(ctx, 885, 895, 130, state.axesVals, QUICK_STYLES.find(s => s.name === state.quickStyle)?.vals, focusAccent, true);
+ }
+
+ } else if (state.cardFrame === 'split') {
+ const topH = 660;
+ if (img) drawCoverImage(ctx, img, 0, 0, W, topH);
+ else drawFallbackPattern(ctx, 0, 0, W, topH, themeObj);
+
+ ctx.fillStyle = themeObj.card;
+ ctx.fillRect(0, topH, W, H - topH);
+
+ ctx.fillStyle = themeObj.accent;
+ ctx.font = '800 24px sans-serif';
+ ctx.fillText(truncateText(ctx, styleLabel, 660), 48, topH + 55);
+
+ ctx.fillStyle = themeObj.text;
+ ctx.font = '900 48px sans-serif';
+ ctx.fillText(truncateText(ctx, beerName, 650), 48, topH + 115);
+
+ ctx.globalAlpha = 0.75;
+ ctx.font = '600 26px sans-serif';
+ ctx.fillText(truncateText(ctx, brewery + (venue ? ` • ${venue}` : ''), 650), 48, topH + 160);
+ ctx.globalAlpha = 1;
+
+ ctx.fillStyle = themeObj.accent;
+ ctx.font = '900 42px sans-serif';
+ ctx.fillText(scoreText, 48, topH + 230);
+
+ ctx.fillStyle = themeObj.text;
+ ctx.globalAlpha = 0.82;
+ ctx.font = '600 22px sans-serif';
+ ctx.fillText(truncateText(ctx, deductLine || tagLine, 650), 48, topH + 285);
+ if (comment) ctx.fillText(truncateText(ctx, comment, 650), 48, topH + 335);
+ ctx.globalAlpha = 1;
+
+ if (state.mode === 'subjective') {
+ drawPentagon(ctx, 890, topH + 210, 135, state.axesVals, QUICK_STYLES.find(s => s.name === state.quickStyle)?.vals, themeObj.accent, state.theme !== 'light' && state.theme !== 'mono');
+ }
+
+ } else if (state.cardFrame === 'side') {
+ const leftW = 560;
+ if (img) drawCoverImage(ctx, img, 0, 0, leftW, H);
+ else drawFallbackPattern(ctx, 0, 0, leftW, H, themeObj);
+
+ ctx.fillStyle = themeObj.card;
+ ctx.fillRect(leftW, 0, W - leftW, H);
+
+ const rx = leftW + 40;
+ const rw = W - leftW - 75;
+ ctx.fillStyle = themeObj.accent;
+ ctx.font = '800 22px sans-serif';
+ ctx.fillText(truncateText(ctx, styleLabel, rw), rx, 85);
+
+ ctx.fillStyle = themeObj.text;
+ ctx.font = '900 42px sans-serif';
+ wrapText(ctx, beerName, rx, 145, rw, 52, 3);
+
+ ctx.globalAlpha = 0.75;
+ ctx.font = '600 24px sans-serif';
+ ctx.fillText(truncateText(ctx, brewery, rw), rx, 320);
+ if (venue) ctx.fillText(truncateText(ctx, `@ ${venue}`, rw), rx, 358);
+ ctx.globalAlpha = 1;
+
+ ctx.fillStyle = themeObj.accent;
+ ctx.font = '900 48px sans-serif';
+ ctx.fillText(scoreText, rx, 440);
+
+ if (state.mode === 'subjective') {
+ drawPentagon(ctx, rx + rw / 2, 650, 145, state.axesVals, QUICK_STYLES.find(s => s.name === state.quickStyle)?.vals, themeObj.accent, state.theme !== 'light' && state.theme !== 'mono');
+ } else {
+ const items = [
+ `外観: ${document.getElementById('score-app').value}/6`,
+ `香り: ${document.getElementById('score-aro').value}/12`,
+ `味: ${document.getElementById('score-fla').value}/20`,
+ `口当たり: ${document.getElementById('score-mou').value}/5`,
+ `総合: ${document.getElementById('score-ove').value}/7`
+ ];
+ ctx.fillStyle = themeObj.text;
+ ctx.font = '700 24px sans-serif';
+ items.forEach((it, idx) => ctx.fillText(it, rx, 520 + idx * 44));
+ }
+
+ ctx.fillStyle = themeObj.text;
+ ctx.globalAlpha = 0.85;
+ ctx.font = '600 21px sans-serif';
+ wrapText(ctx, deductLine || state.selectedTags.map(t => `#${t}`).join(' '), rx, 850, rw, 30, 3);
+ ctx.globalAlpha = 1;
+
+ } else {
+ ctx.strokeStyle = themeObj.accent;
+ ctx.lineWidth = 6;
+ ctx.strokeRect(36, 36, W - 72, H - 72);
+
+ ctx.fillStyle = themeObj.accent;
+ ctx.font = '900 26px sans-serif';
+ ctx.fillText('BEER TASTING NOTE // SENSORY SHEET', 72, 100);
+
+ if (img) {
+ ctx.save();
+ drawRoundedRectPath(ctx, 72, 135, 240, 240, 20);
+ ctx.clip();
+ drawCoverImage(ctx, img, 72, 135, 240, 240);
+ ctx.restore();
+ }
+
+ const tx = img ? 345 : 72;
+ const tw = img ? 650 : 920;
+ ctx.fillStyle = themeObj.accent;
+ ctx.font = '800 26px sans-serif';
+ ctx.fillText(truncateText(ctx, styleLabel, tw), tx, 175);
+
+ ctx.fillStyle = themeObj.text;
+ ctx.font = '900 50px sans-serif';
+ wrapText(ctx, beerName, tx, 240, tw, 58, 2);
+
+ ctx.globalAlpha = 0.75;
+ ctx.font = '600 26px sans-serif';
+ ctx.fillText(truncateText(ctx, brewery + (venue ? ` @ ${venue}` : ''), tw), tx, 365);
+ ctx.globalAlpha = 1;
+
+ ctx.fillStyle = themeObj.accent;
+ ctx.font = '900 68px sans-serif';
+ ctx.fillText(scoreText, 72, 490);
+
+ if (state.mode === 'subjective') {
+ drawPentagon(ctx, 760, 620, 190, state.axesVals, QUICK_STYLES.find(s => s.name === state.quickStyle)?.vals, themeObj.accent, state.theme !== 'light' && state.theme !== 'mono');
+ } else {
+ const items = [
+ `Appearance: ${document.getElementById('score-app').value}/6`,
+ `Aroma: ${document.getElementById('score-aro').value}/12`,
+ `Flavor: ${document.getElementById('score-fla').value}/20`,
+ `Mouthfeel: ${document.getElementById('score-mou').value}/5`,
+ `Overall: ${document.getElementById('score-ove').value}/7`
+ ];
+ ctx.fillStyle = themeObj.text;
+ ctx.font = '700 28px sans-serif';
+ items.forEach((it, idx) => ctx.fillText(it, 580, 490 + idx * 48));
+ if (deductList.length) {
+ ctx.fillStyle = themeObj.accent;
+ ctx.font = '700 22px sans-serif';
+ wrapText(ctx, `指摘: ${deductList.join(' / ')}`, 72, 565, 470, 32, 3);
+ }
+ }
+
+ ctx.fillStyle = themeObj.text;
+ ctx.font = '700 24px sans-serif';
+ wrapText(ctx, state.selectedTags.map(t => `#${t}`).join(' '), 72, 860, 920, 34, 2);
+
+ if (comment) {
+ ctx.globalAlpha = 0.8;
+ ctx.font = '500 24px sans-serif';
+ wrapText(ctx, comment, 72, 945, 920, 32, 2);
+ ctx.globalAlpha = 1;
+ }
+ }
+ };
+
+ if (state.photoImgObj && (state.photoImgObj.naturalWidth || state.photoImgObj.width)) {
+ renderContent(state.photoImgObj);
+ } else if (state.photoDataUrl) {
+ const img = new Image();
+ img.onload = () => { state.photoImgObj = img; renderContent(img); };
+ img.onerror = () => renderContent(null);
+ img.src = state.photoDataUrl;
+ } else {
+ renderContent(null);
+ }
+}
+
+function drawCoverImage(ctx, img, x, y, w, h) {
+ const iw = img.naturalWidth || img.width;
+ const ih = img.naturalHeight || img.height;
+ if (!iw || !ih) return;
+ const ir = iw / ih;
+ const cr = w / h;
+ let sx = 0, sy = 0, sw = iw, sh = ih;
+ if (ir > cr) { sw = ih * cr; sx = (iw - sw) / 2; }
+ else { sh = iw / cr; sy = (ih - sh) / 2; }
+ ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+}
+
+function drawFallbackPattern(ctx, x, y, w, h, themeObj) {
+ ctx.fillStyle = themeObj.card;
+ ctx.fillRect(x, y, w, h);
+ ctx.fillStyle = themeObj.accent;
+ ctx.globalAlpha = 0.12;
+ ctx.beginPath();
+ ctx.arc(x + w * 0.5, y + h * 0.45, Math.min(w, h) * 0.28, 0, Math.PI * 2);
+ ctx.fill();
+ ctx.globalAlpha = 1;
+}
+
+function drawPentagon(ctx, cx, cy, r, vals, baseVals, color, isDarkBg) {
+ const n = 5;
+ const strokeGrid = isDarkBg ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)';
+ const labelCol = isDarkBg ? '#f3f4f6' : '#1f2937';
+
+ [0.4, 0.7, 1.0].forEach(scale => {
+ ctx.beginPath();
+ for (let i = 0; i < n; i++) {
+ const ang = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+ const px = cx + r * scale * Math.cos(ang);
+ const py = cy + r * scale * Math.sin(ang);
+ i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+ }
+ ctx.closePath();
+ ctx.strokeStyle = strokeGrid;
+ ctx.lineWidth = 2;
+ ctx.stroke();
+ });
+
+ if (baseVals) {
+ ctx.save();
+ ctx.setLineDash([6, 6]);
+ ctx.beginPath();
+ for (let i = 0; i < n; i++) {
+ const ang = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+ const ratio = baseVals[i] / 5;
+ const px = cx + r * ratio * Math.cos(ang);
+ const py = cy + r * ratio * Math.sin(ang);
+ i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+ }
+ ctx.closePath();
+ ctx.strokeStyle = isDarkBg ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.55)';
+ ctx.lineWidth = 3;
+ ctx.stroke();
+ ctx.restore();
+ }
+
+ ctx.beginPath();
+ for (let i = 0; i < n; i++) {
+ const ang = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+ const ratio = vals[i] / 5;
+ const px = cx + r * ratio * Math.cos(ang);
+ const py = cy + r * ratio * Math.sin(ang);
+ i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+ }
+ ctx.closePath();
+ ctx.fillStyle = color + '55';
+ ctx.fill();
+ ctx.strokeStyle = color;
+ ctx.lineWidth = 4;
+ ctx.stroke();
+
+ ctx.fillStyle = labelCol;
+ ctx.font = '700 18px sans-serif';
+ ctx.textAlign = 'center';
+ const shortLabels = ['アロマ', '苦味', '甘み', 'バランス', 'キレ'];
+ for (let i = 0; i < n; i++) {
+ const ang = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+ const lx = cx + (r + 26) * Math.cos(ang);
+ const ly = cy + (r + 26) * Math.sin(ang) + 6;
+ ctx.fillText(shortLabels[i], lx, ly);
+ }
+ ctx.textAlign = 'left';
+}
+
+function truncateText(ctx, text, maxW) {
+ if (ctx.measureText(text).width <= maxW) return text;
+ let t = text;
+ while (t.length > 0 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+ return t + '…';
+}
+
+function wrapText(ctx, text, x, y, maxW, lineH, maxLines) {
+ const chars = text.split('');
+ let line = '', lines = 0;
+ for (let i = 0; i < chars.length; i++) {
+ const test = line + chars[i];
+ if (ctx.measureText(test).width > maxW && i > 0) {
+ lines++;
+ if (lines >= maxLines) { ctx.fillText(truncateText(ctx, line, maxW), x, y); return; }
+ ctx.fillText(line, x, y);
+ line = chars[i];
+ y += lineH;
+ } else {
+ line = test;
+ }
+ }
+ if (line) ctx.fillText(line, x, y);
+}
+
+async function shareOrDownloadCard() {
+ const canvas = document.getElementById('shareCanvas');
+ const name = document.getElementById('beerName').value.trim() || 'beer-tasting-note';
+ let dataUrl = '';
+ try {
+ dataUrl = canvas.toDataURL('image/png');
+ } catch (e) {
+ alert('画像の生成中に制限が発生しました。ブラウザで直接開いてお試しください。');
+ return;
+ }
+
+ try {
+ if (navigator.share && navigator.canShare) {
+ const res = await fetch(dataUrl);
+ const blob = await res.blob();
+ const file = new File([blob], `${name}.png`, { type: 'image/png' });
+ if (navigator.canShare({ files: [file] })) {
+ await navigator.share({
+ files: [file],
+ title: name,
+ text: `${name} - Beer Tasting Note`
+ });
+ return;
+ }
+ }
+ } catch (err) {
+ if (err && err.name === 'AbortError') return;
+ }
+
+ try {
+ const link = document.createElement('a');
+ link.download = `${name}.png`;
+ link.href = dataUrl;
+ document.body.appendChild(link);
+ link.click();
+ document.body.removeChild(link);
+ } catch (e) {}
+
+ document.getElementById('exportPreviewImg').src = dataUrl;
+ document.getElementById('imageSaveModal').classList.remove('hidden');
+}
+
+function closeImageSaveModal() {
+ document.getElementById('imageSaveModal').classList.add('hidden');
+}
+
+function copyShareText() {
+ const beerName = document.getElementById('beerName').value.trim() || 'クラフトビール';
+ const brewery = document.getElementById('breweryName').value.trim();
+ const venue = document.getElementById('venueName').value.trim();
+ const comment = document.getElementById('tastingComment').value.trim();
+ const styleLabel = state.mode === 'subjective' ? state.quickStyle : state.judgingStyle.nameJa;
+ const score = state.mode === 'subjective'
+ ? `★${parseFloat(document.getElementById('overallRating').value).toFixed(1)}/5.0`
+ : `スコア ${document.getElementById('judgingTotalScore').textContent}/50点`;
+ const deductList = getAllDeductionsList();
+
+ const lines = [
+ `🍺 ${beerName}${brewery ? ` / ${brewery}` : ''}`,
+ `スタイル: ${styleLabel} (${score})`,
+ venue ? `📍 ${venue}` : '',
+ (state.mode === 'judging' && deductList.length) ? `指摘要素: ${deductList.join(', ')}` : '',
+ state.selectedTags.length ? state.selectedTags.map(t => `#${t}`).join(' ') : '',
+ comment ? `\n${comment}` : '',
+ `\n#BeerTastingNote #クラフトビール`
+ ].filter(Boolean).join('\n');
+
+ if (navigator.clipboard && navigator.clipboard.writeText) {
+ navigator.clipboard.writeText(lines).then(() => alert('SNS投稿用テキストをコピーしました！')).catch(() => fallbackCopy(lines));
+ } else {
+ fallbackCopy(lines);
+ }
+}
+
+function fallbackCopy(text) {
+ const ta = document.createElement('textarea');
+ ta.value = text;
+ document.body.appendChild(ta);
+ ta.select();
+ document.execCommand('copy');
+ document.body.removeChild(ta);
+ alert('SNS投稿用テキストをコピーしました！');
+}
+
+function saveToStorage(rec) {
+ return new Promise(resolve => {
+ memoryRecords = [rec, ...memoryRecords.filter(x => x.id !== rec.id)];
+ safeLocalSet(memoryRecords);
+ if (db) {
+ try {
+ const tx = db.transaction(STORE_NAME, 'readwrite');
+ tx.objectStore(STORE_NAME).put(rec);
+ tx.oncomplete = () => resolve();
+ tx.onerror = () => resolve();
+ } catch (e) {
+ resolve();
+ }
+ } else {
+ resolve();
+ }
+ });
+}
+
+function getAllRecords() {
+ return new Promise(resolve => {
+ if (db) {
+ try {
+ const tx = db.transaction(STORE_NAME, 'readonly');
+ const req = tx.objectStore(STORE_NAME).getAll();
+ req.onsuccess = () => {
+ const res = (req.result || []).filter(x => !x.isDraft && x.id !== 'current_draft');
+ if (res.length) memoryRecords = res.sort((a, b) => b.id - a.id);
+ resolve(memoryRecords);
+ };
+ req.onerror = () => {
+ const local = safeLocalGet();
+ if (local && local.length) memoryRecords = local;
+ resolve(memoryRecords);
+ };
+ } catch (e) {
+ const local = safeLocalGet();
+ if (local && local.length) memoryRecords = local;
+ resolve(memoryRecords);
+ }
+ } else {
+ const local = safeLocalGet();
+ if (local && local.length) memoryRecords = local;
+ resolve(memoryRecords);
+ }
+ });
+}
+
+function deleteFromStorage(id) {
+ return new Promise(resolve => {
+ memoryRecords = memoryRecords.filter(x => x.id !== id);
+ safeLocalSet(memoryRecords);
+ if (db) {
+ try {
+ const tx = db.transaction(STORE_NAME, 'readwrite');
+ tx.objectStore(STORE_NAME).delete(id);
+ tx.oncomplete = () => resolve();
+ tx.onerror = () => resolve();
+ } catch (e) {
+ resolve();
+ }
+ } else {
+ resolve();
+ }
+ });
+}
+
+async function saveRecord() {
+ const beerName = document.getElementById('beerName').value.trim();
+ if (!beerName) { alert('ビール名を入力してください！'); return; }
+
+ const rec = {
+ id: Date.now(),
+ date: new Date().toISOString(),
+ mode: state.mode,
+ beerName,
+ breweryName: document.getElementById('breweryName').value.trim(),
+ venueName: document.getElementById('venueName').value.trim(),
+ abvIbu: document.getElementById('abvIbu').value.trim(),
+ quickStyle: state.quickStyle,
+ axesVals: [...state.axesVals],
+ overallRating: parseFloat(document.getElementById('overallRating').value),
+ judgingStyleId: state.judgingStyle.id,
+ judgingStyleName: state.judgingStyle.nameJa,
+ judgingScores: {
+ app: parseInt(document.getElementById('score-app').value),
+ aro: parseInt(document.getElementById('score-aro').value),
+ fla: parseInt(document.getElementById('score-fla').value),
+ mou: parseInt(document.getElementById('score-mou').value),
+ ove: parseInt(document.getElementById('score-ove').value),
+ total: parseInt(document.getElementById('judgingTotalScore').textContent)
+ },
+ deductions: {
+ app: [...(state.deductions.app || [])],
+ aro: [...(state.deductions.aro || [])],
+ fla: [...(state.deductions.fla || [])],
+ mou: [...(state.deductions.mou || [])]
+ },
+ tags: [...state.selectedTags],
+ comment: document.getElementById('tastingComment').value.trim(),
+ photoDataUrl: (state.photoDataUrl && state.photoDataUrl.startsWith('data:')) ? state.photoDataUrl : null
+ };
+
+ await saveToStorage(rec);
+ alert('テイスティング記録を保存しました！');
+ switchTab('history');
+}
+
+function switchTab(tab) {
+ const vRec = document.getElementById('view-record');
+ const vHis = document.getElementById('view-history');
+ const nRec = document.getElementById('nav-record');
+ const nHis = document.getElementById('nav-history');
+
+ if (tab === 'record') {
+ vRec.classList.remove('hidden');
+ vHis.classList.add('hidden');
+ nRec.classList.add('active');
+ nHis.classList.remove('active');
+ } else {
+ vRec.classList.add('hidden');
+ vHis.classList.remove('hidden');
+ nHis.classList.add('active');
+ nRec.classList.remove('active');
+ renderHistory();
+ }
+}
+
+function setHistoryFilter(f) {
+ state.historyFilter = f;
+ ['all', 'subjective', 'judging'].forEach(k => {
+ const el = document.getElementById(`filt-${k}`);
+ if (k === f) el.classList.add('active');
+ else el.classList.remove('active');
+ });
+ renderHistory();
+}
+
+function toggleHistoryView() {
+ state.historyGrid = !state.historyGrid;
+ renderHistory();
+}
+
+async function renderHistory() {
+ const all = await getAllRecords();
+ const q = document.getElementById('historySearch').value.toLowerCase().trim();
+ const filtered = all.filter(r => {
+ const modeOk = state.historyFilter === 'all' || r.mode === state.historyFilter;
+ const qOk = !q || r.beerName.toLowerCase().includes(q) || (r.breweryName || '').toLowerCase().includes(q) || (r.venueName || '').toLowerCase().includes(q) || (r.comment || '').toLowerCase().includes(q);
+ return modeOk && qOk;
+ });
+
+ document.getElementById('historyCount').textContent = `${filtered.length}件の記録`;
+ const cont = document.getElementById('historyContainer');
+
+ if (!filtered.length) {
+ cont.className = 'stack';
+ cont.innerHTML = `<div class="card" style="text-align:center;color:var(--text-muted);font-size:12px;padding:32px;">該当する記録がありません</div>`;
+ return;
+ }
+
+ if (state.historyGrid) {
+ cont.className = 'history-grid';
+ cont.innerHTML = filtered.map(r => `
+ <div onclick="openDetail(${r.id})" class="grid-card">
+ ${r.photoDataUrl ? `<img src="${r.photoDataUrl}" />` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center;font-size:11px;font-weight:700;">${r.beerName}</div>`}
+ <div class="grid-card-label">${r.beerName}</div>
+ </div>
+ `).join('');
+ } else {
+ cont.className = 'stack';
+ cont.innerHTML = filtered.map(r => {
+ const score = r.mode === 'subjective' ? `★ ${r.overallRating.toFixed(1)}` : `${r.judgingScores.total} / 50`;
+ const style = r.mode === 'subjective' ? r.quickStyle : r.judgingStyleName;
+ return `
+ <div onclick="openDetail(${r.id})" class="history-item">
+ ${r.photoDataUrl ? `<img src="${r.photoDataUrl}" class="history-thumb" />` : `<div class="history-thumb">🍺</div>`}
+ <div style="flex:1;min-width:0;">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+ <span class="accent-label" style="font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${style}</span>
+ <span class="accent-label" style="font-size:12px;flex-shrink:0;">${score}</span>
+ </div>
+ <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.beerName}</div>
+ <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.breweryName || 'ブルワリー未入力'} • ${new Date(r.date).toLocaleDateString()}</div>
+ </div>
+ </div>
+ `;
+ }).join('');
+ }
+}
+
+async function openDetail(id) {
+ const all = await getAllRecords();
+ const r = all.find(x => x.id === id);
+ if (!r) return;
+
+ document.getElementById('detModeBadge').textContent = r.mode === 'subjective' ? '主観モード' : '審査モード';
+ document.getElementById('detTitle').textContent = r.beerName;
+ document.getElementById('detSub').textContent = `${r.breweryName || ''} ${r.venueName ? `@ ${r.venueName}` : ''}`;
+
+ const photo = document.getElementById('detPhoto');
+ if (r.photoDataUrl) { photo.src = r.photoDataUrl; photo.classList.remove('hidden'); }
+ else { photo.classList.add('hidden'); }
+
+ const ded = r.deductions ? [...(r.deductions.app||[]), ...(r.deductions.aro||[]), ...(r.deductions.fla||[]), ...(r.deductions.mou||[])] : [];
+ const body = document.getElementById('detBody');
+ body.innerHTML = `
+ <div style="font-weight:700;">スタイル: ${r.mode === 'subjective' ? r.quickStyle : `${r.judgingStyleId}. ${r.judgingStyleName}`}</div>
+ <div>スコア: ${r.mode === 'subjective' ? `★${r.overallRating.toFixed(1)} (${r.axesVals.join(' / ')})` : `${r.judgingScores.total}/50点`}</div>
+ ${ded.length ? `<div style="color:#fbbf24;">減点要素: ${ded.join(', ')}</div>` : ''}
+ ${r.tags?.length ? `<div>特徴: ${r.tags.join(', ')}</div>` : ''}
+ ${r.comment ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border-color);">${r.comment}</div>` : ''}
+ `;
+
+ document.getElementById('btnReloadRecord').onclick = () => reloadRecord(r);
+ document.getElementById('btnDeleteRecord').onclick = () => deleteRecord(r.id);
+ document.getElementById('detailModal').classList.remove('hidden');
+}
+
+function closeDetailModal() {
+ document.getElementById('detailModal').classList.add('hidden');
+}
+
+function reloadRecord(r) {
+ document.getElementById('beerName').value = r.beerName;
+ document.getElementById('breweryName').value = r.breweryName || '';
+ document.getElementById('venueName').value = r.venueName || '';
+ document.getElementById('abvIbu').value = r.abvIbu || '';
+ document.getElementById('tastingComment').value = r.comment || '';
+ state.selectedTags = [...(r.tags || [])];
+ renderFlavorTags();
+
+ if (r.photoDataUrl) {
+ state.photoDataUrl = r.photoDataUrl;
+ state.photoImgObj = null;
+ const prev = document.getElementById('photoPreview');
+ prev.src = r.photoDataUrl;
+ prev.classList.remove('hidden');
+ document.getElementById('photoPlaceholder').classList.add('hidden');
+ } else {
+ state.photoDataUrl = null;
+ state.photoImgObj = null;
+ document.getElementById('photoPreview').classList.add('hidden');
+ document.getElementById('photoPlaceholder').classList.remove('hidden');
+ }
+
+ if (r.mode === 'subjective') {
+ state.quickStyle = r.quickStyle;
+ state.axesVals = [...r.axesVals];
+ document.getElementById('overallRating').value = r.overallRating;
+ renderQuickStyles();
+ renderSliders();
+ updateSubjective();
+ setMode('subjective');
+ } else {
+ selectJudgingStyle(r.judgingStyleId);
+ document.getElementById('score-app').value = r.judgingScores.app;
+ document.getElementById('score-aro').value = r.judgingScores.aro;
+ document.getElementById('score-fla').value = r.judgingScores.fla;
+ document.getElementById('score-mou').value = r.judgingScores.mou;
+ document.getElementById('score-ove').value = r.judgingScores.ove;
+ state.deductions = r.deductions ? {
+ app: [...(r.deductions.app || [])],
+ aro: [...(r.deductions.aro || [])],
+ fla: [...(r.deductions.fla || [])],
+ mou: [...(r.deductions.mou || [])]
+ } : { app: [], aro: [], fla: [], mou: [] };
+ renderDeductionChips();
+ updateJudging();
+ setMode('judging');
+ }
+
+ closeDetailModal();
+ switchTab('record');
+}
+
+async function deleteRecord(id) {
+ if (!confirm('この記録を削除しますか？')) return;
+ await deleteFromStorage(id);
+ closeDetailModal();
+ renderHistory();
+}
+
+async function exportCSV() {
+ const all = await getAllRecords();
+ if (!all.length) { alert('出力するデータがありません'); return; }
+ const headers = ['日付', 'モード', 'ビール名', 'ブルワリー', '店名', 'スタイル', '総合スコア', '減点要素', '特徴タグ', 'メモ'];
+ const rows = all.map(r => {
+ const ded = r.deductions ? [...(r.deductions.app||[]), ...(r.deductions.aro||[]), ...(r.deductions.fla||[]), ...(r.deductions.mou||[])] : [];
+ return [
+ new Date(r.date).toLocaleString(),
+ r.mode === 'subjective' ? '主観' : '審査',
+ `"${(r.beerName || '').replace(/"/g, '""')}"`,
+ `"${(r.breweryName || '').replace(/"/g, '""')}"`,
+ `"${(r.venueName || '').replace(/"/g, '""')}"`,
+ `"${r.mode === 'subjective' ? r.quickStyle : r.judgingStyleName}"`,
+ r.mode === 'subjective' ? r.overallRating : r.judgingScores.total,
+ `"${ded.join('/')}"`,
+ `"${(r.tags || []).join('/')}"`,
+ `"${(r.comment || '').replace(/"/g, '""')}"`
+ ].join(',');
+ });
+
+ const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+ const blob = new Blob([bom, [headers.join(','), ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+ const link = document.createElement('a');
+ link.href = URL.createObjectURL(blob);
+ link.download = `beer-tasting-note-${new Date().toISOString().slice(0, 10)}.csv`;
+ document.body.appendChild(link);
+ link.click();
+ document.body.removeChild(link);
+}
+
+async function exportJSON() {
+ const all = await getAllRecords();
+ if (!all.length) { alert('出力するデータがありません'); return; }
+ const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
+ const link = document.createElement('a');
+ link.href = URL.createObjectURL(blob);
+ link.download = `beer-tasting-note-backup-${new Date().toISOString().slice(0, 10)}.json`;
+ document.body.appendChild(link);
+ link.click();
+ document.body.removeChild(link);
+}
+
+function importJSON(e) {
+ const input = e.target;
+ const file = input.files && input.files[0];
+ if (!file) return;
+ const reader = new FileReader();
+ reader.onload = async (ev) => {
+ try {
+ const items = JSON.parse(ev.target.result);
+ if (!Array.isArray(items)) throw new Error('Invalid format');
+ for (const item of items) {
+ if (item && item.beerName) {
+ if (!item.id) item.id = Date.now() + Math.floor(Math.random() * 1000);
+ await saveToStorage(item);
+ }
+ }
+ input.value = '';
+ alert(`${items.length}件のデータを復元しました！`);
+ renderHistory();
+ } catch (err) {
+ input.value = '';
+ alert('JSONファイルの読み込みに失敗しました。バックアップファイルを選択してください。');
+ }
+ };
+ reader.readAsText(file);
+}
+
+let currentDetailStyle = null;
+const DEFAULT_GUIDELINE_URL = 'https://www.beertaster.org/beerstyle/';
+
+function getGuidelineBaseUrl() {
+ try {
+ return window.localStorage.getItem('btn_guideline_url') || DEFAULT_GUIDELINE_URL;
+ } catch (e) {
+ return DEFAULT_GUIDELINE_URL;
+ }
+}
+
+function saveGuidelineUrl(val) {
+ const clean = (val || '').trim() || DEFAULT_GUIDELINE_URL;
+ try { window.localStorage.setItem('btn_guideline_url', clean); } catch (e) {}
+ updateGuidelineLinks();
+}
+
+function updateGuidelineLinks() {
+ const base = getGuidelineBaseUrl();
+ const directEl = document.getElementById('jgWebDirectLink');
+ if (directEl && state.judgingStyle) {
+ directEl.href = buildStyleWebUrl(base, state.judgingStyle);
+ }
+ const sdLink = document.getElementById('sdWebLink');
+ if (sdLink && currentDetailStyle) {
+ sdLink.href = buildStyleWebUrl(base, currentDetailStyle);
+ }
+}
+
+function buildStyleWebUrl(baseUrl, styleObj) {
+ if (!styleObj) return baseUrl;
+ const cleanBase = baseUrl.split('#')[0];
+ const targetText = encodeURIComponent(styleObj.nameJa);
+ return `${cleanBase}#:~:text=${targetText}`;
+}
+
+function buildStructuredCriteria(s) {
+ const specsParts = s.specs.split('|').map(x => x.trim());
+ const abvPart = specsParts[0] || '';
+ const ibuPart = specsParts[1] || '';
+ const srmPart = specsParts[2] || '';
+
+ let srmDesc = 'スタイル基準の色調レンジに適合。透明度はスタイル規定（クリアまたは無濾過の霞み）に準拠し、きめ細かい泡持ちが良い。';
+ if (srmPart.includes('1-4') || srmPart.includes('2-4') || srmPart.includes('2-5') || srmPart.includes('3-4') || srmPart.includes('3-5') || srmPart.includes('3-6') || srmPart.includes('3-7')) {
+ srmDesc = '淡いストロー（麦わら色）〜ゴールド。透明度はスタイル規定（クリアまたは無濾過の霞み）に準拠し、きめ細かい白色の泡持ちが良い。';
+ } else if (srmPart.includes('6-14') || srmPart.includes('8-14') || srmPart.includes('11-18') || srmPart.includes('12-16') || srmPart.includes('12-22')) {
+ srmDesc = 'ディープゴールド〜アンバー（琥珀色）・カッパー（銅色）。輝きのある外観とクリーミーで持続性のあるオフホワイト〜淡褐色の泡。';
+ } else if (srmPart.includes('15-26') || srmPart.includes('15-30') || srmPart.includes('20-35') || srmPart.includes('30+') || srmPart.includes('40+')) {
+ srmDesc = 'ダークブラウン〜漆黒（オパーク）。光を通さない濃色または深いルビーの輝きを持ち、豊かで持続性の高いタン〜ブラウンの泡立ち。';
+ } else if (srmPart.includes('果実') || srmPart.includes('原料') || srmPart.includes('ベース') || srmPart.includes('自由')) {
+ srmDesc = 'ベースビールまたは使用した副原料・果実に由来する自然な色調。不自然な濁りや浮遊物がなく、健全な泡持ちを備える。';
+ }
+
+ let aromaDesc = 'モルト・ホップ・発酵由来のエステルがスタイル基準内で調和。ダイアセチル、DMS、アセトアルデヒド、酸化臭などのオフフレーバーは原則として許容されない（スタイル固有の許容範囲を除く）。';
+ if (s.cat.includes('ラガー')) {
+ aromaDesc = 'クリーンなラガー発酵由来の澄んだ香り。ピルスナー／ミュンヘンモルトの穀物・パン様の香りとノーブルホップ等の花・草・柑橘香が調和し、フルーティエステルやダイアセチルは極力抑えられている。';
+ } else if (s.nameJa.includes('IPA') || s.nameJa.includes('ペールエール')) {
+ aromaDesc = 'ホップ由来の柑橘、トロピカルフルーツ、松脂、フローラル、ハーバルなどの鮮烈でフレッシュなアロマが主体。クリーンな発酵プロファイルとモルトの土台がホップを引き立てる。';
+ } else if (s.nameJa.includes('ヴァイツェン')) {
+ aromaDesc = 'ヴァイツェン酵母特有のフェノール（クローブ様スパイス）とエステル（熟したバナナ様果実香）のバランスが中〜強レベルで明確に感じられ、小麦モルトの優しい香りが支える。';
+ } else if (s.cat.includes('ベルギー')) {
+ aromaDesc = 'ベルギー酵母が生み出す複雑でフルーティなエステル（洋梨、リンゴ、レーズン等）とスパイシーなフェノール香が主体。ホップ香は控えめ〜中程度で酵母の個性を引き立てる。';
+ } else if (s.nameJa.includes('スタウト') || s.nameJa.includes('ポーター')) {
+ aromaDesc = 'ローストモルト／ローストバーレイ由来のコーヒー、ダークチョコレート、カカオ、トーストの香ばしさが主体。英国／米国ホップの香りがスタイルに応じて穏やかに寄り添う。';
+ }
+
+ let flavorDesc = `${s.desc}（苦味基準: ${ibuPart}）`;
+ let mouthfeelDesc = 'スタイル基準に適合したボディと炭酸ガスボリューム。雑味や渋み（アストリンジェンシー）がなく、アルコール感も度数相応に滑らかに統合されている。';
+ if (abvPart.includes('7.') || abvPart.includes('8.') || abvPart.includes('9.') || abvPart.includes('10.') || abvPart.includes('12.')) {
+ mouthfeelDesc = 'ミディアム〜フルボディの飲みごたえ。ハイアルコール由来の心地よい温かみ（ウォーミング感）はあるが、溶剤のような刺激臭やトゲは感じられない。';
+ } else if (abvPart.includes('2.') || abvPart.includes('3.') || abvPart.includes('4.')) {
+ mouthfeelDesc = 'ライト〜ミディアムライトの軽快なボディ。水っぽさを感じさせないモルトの芯があり、クリスプでリフレッシングな飲み口。';
+ }
+
+ const overallDesc = `【カテゴリー】${s.cat}（No.${s.id} / ${s.nameEn}）\n【数値レンジ】${s.specs}\n【審査のポイント】スタイル全体のバランス、発酵の健全性、各要素の調和度合いを総合的に評価する。`;
+
+ return {
+ appearance: `${srmDesc}（色度基準: ${srmPart}）`,
+ aroma: aromaDesc,
+ flavor: flavorDesc,
+ mouthfeel: mouthfeelDesc,
+ overall: overallDesc
+ };
+}
+
+function openStyleDetailModal(id) {
+ const s = STYLES_114.find(x => x.id === id);
+ if (!s) return;
+ currentDetailStyle = s;
+ const crit = buildStructuredCriteria(s);
+
+ document.getElementById('sdCatBadge').textContent = `${s.cat} | No.${s.id}`;
+ document.getElementById('sdTitle').textContent = `${s.id}. ${s.nameJa}`;
+ document.getElementById('sdSub').textContent = `${s.nameEn} | ${s.specs}`;
+ document.getElementById('sdAppearance').textContent = crit.appearance;
+ document.getElementById('sdAroma').textContent = crit.aroma;
+ document.getElementById('sdFlavor').textContent = crit.flavor;
+ document.getElementById('sdMouthfeel').textContent = crit.mouthfeel;
+ document.getElementById('sdOverall').innerText = crit.overall;
+
+ const baseUrl = getGuidelineBaseUrl();
+ document.getElementById('customGuidelineUrl').value = baseUrl;
+ document.getElementById('sdWebLink').href = buildStyleWebUrl(baseUrl, s);
+
+ document.getElementById('sdApplyBtn').onclick = () => {
+ selectJudgingStyle(s.id);
+ setMode('judging');
+ closeStyleDetailModal();
+ closeStyleModal();
+ };
+
+ document.getElementById('styleDetailModal').classList.remove('hidden');
+}
+
+function closeStyleDetailModal() {
+ document.getElementById('styleDetailModal').classList.add('hidden');
+}
+
+function copyStyleQueryForWeb() {
+ if (!currentDetailStyle) return;
+ const txt = `${currentDetailStyle.nameJa}`;
+ if (navigator.clipboard && navigator.clipboard.writeText) {
+ navigator.clipboard.writeText(txt).then(() => alert(`「${txt}」をコピーしました。Webページ内検索で貼り付けて該当箇所へ移動できます。`)).catch(() => fallbackCopy(txt));
+ } else {
+ fallbackCopy(txt);
+ }
+}
+
+
+// --- Pull-to-Refresh Guard & Automatic Draft Persistence ---
+let draftSaveTimer = null;
+const DRAFT_STORAGE_KEY = 'btn_current_draft_v1';
+
+function setupPullToRefreshGuard() {
+ let startY = 0;
+ document.addEventListener('touchstart', (e) => {
+ if (e.touches && e.touches.length === 1) {
+ startY = e.touches[0].clientY;
+ }
+ }, { passive: true });
+
+ document.addEventListener('touchmove', (e) => {
+ if (!e.touches || e.touches.length !== 1) return;
+ const currentY = e.touches[0].clientY;
+ const deltaY = currentY - startY;
+ const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+ // Allow scrolling inside open modals or dropdowns
+ const inScrollableModal = e.target && e.target.closest && (e.target.closest('.modal-body') || e.target.closest('.dropdown-list'));
+ if (!inScrollableModal && scrollTop <= 0 && deltaY > 0) {
+ if (e.cancelable) e.preventDefault();
+ }
+ }, { passive: false });
+}
+
+function collectCurrentDraft() {
+ return {
+ mode: state.mode,
+ theme: state.theme,
+ cardFrame: state.cardFrame,
+ beerName: document.getElementById('beerName').value,
+ breweryName: document.getElementById('breweryName').value,
+ venueName: document.getElementById('venueName').value,
+ abvIbu: document.getElementById('abvIbu').value,
+ quickStyle: state.quickStyle,
+ axesVals: [...state.axesVals],
+ overallRating: parseFloat(document.getElementById('overallRating').value),
+ judgingStyleId: state.judgingStyle ? state.judgingStyle.id : '101-A',
+ judgingScores: {
+ app: parseInt(document.getElementById('score-app').value),
+ aro: parseInt(document.getElementById('score-aro').value),
+ fla: parseInt(document.getElementById('score-fla').value),
+ mou: parseInt(document.getElementById('score-mou').value),
+ ove: parseInt(document.getElementById('score-ove').value)
+ },
+ deductions: {
+ app: [...(state.deductions.app || [])],
+ aro: [...(state.deductions.aro || [])],
+ fla: [...(state.deductions.fla || [])],
+ mou: [...(state.deductions.mou || [])]
+ },
+ selectedTags: [...state.selectedTags],
+ comment: document.getElementById('tastingComment').value,
+ photoDataUrl: (state.photoDataUrl && state.photoDataUrl.startsWith('data:')) ? state.photoDataUrl : null
+ };
+}
+
+function scheduleDraftSave() {
+ if (draftSaveTimer) clearTimeout(draftSaveTimer);
+ draftSaveTimer = setTimeout(saveDraftNow, 250);
+}
+
+function saveDraftNow() {
+ const draft = collectCurrentDraft();
+ // Save to localStorage (try with photo first; if quota exceeded, save text fields without photo)
+ try {
+ window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+ } catch (e) {
+ try {
+ const liteDraft = { ...draft, photoDataUrl: null };
+ window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(liteDraft));
+ } catch (e2) {}
+ }
+ // Also persist full draft (including photo) in IndexedDB if available
+ if (db) {
+ try {
+ const tx = db.transaction(STORE_NAME, 'readwrite');
+ tx.objectStore(STORE_NAME).put({ id: 'current_draft', isDraft: true, data: draft });
+ } catch (e) {}
+ }
+}
+
+async function restoreDraftOnStartup() {
+ let draft = null;
+ try {
+ const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+ if (raw) draft = JSON.parse(raw);
+ } catch (e) {}
+
+ if (db) {
+ try {
+ const idbDraft = await new Promise(resolve => {
+ const tx = db.transaction(STORE_NAME, 'readonly');
+ const req = tx.objectStore(STORE_NAME).get('current_draft');
+ req.onsuccess = () => resolve(req.result && req.result.data ? req.result.data : null);
+ req.onerror = () => resolve(null);
+ });
+ if (idbDraft) draft = idbDraft;
+ } catch (e) {}
+ }
+
+ if (!draft) return;
+
+ if (draft.theme && THEMES.some(t => t.id === draft.theme)) {
+ state.theme = draft.theme;
+ document.body.setAttribute('data-theme', state.theme);
+ const tObj = THEMES.find(t => t.id === state.theme);
+ if (tObj) document.getElementById('themeLabel').textContent = tObj.label;
+ }
+ if (draft.cardFrame) {
+ state.cardFrame = draft.cardFrame;
+ document.querySelectorAll('.frame-btn').forEach(b => b.classList.remove('active'));
+ const fBtn = document.getElementById(`frame-${draft.cardFrame}`);
+ if (fBtn) fBtn.classList.add('active');
+ }
+
+ document.getElementById('beerName').value = draft.beerName || '';
+ document.getElementById('breweryName').value = draft.breweryName || '';
+ document.getElementById('venueName').value = draft.venueName || '';
+ document.getElementById('abvIbu').value = draft.abvIbu || '';
+ document.getElementById('tastingComment').value = draft.comment || '';
+
+ if (draft.quickStyle && QUICK_STYLES.some(s => s.name === draft.quickStyle)) {
+ state.quickStyle = draft.quickStyle;
+ document.getElementById('selectedQuickStyleLabel').textContent = draft.quickStyle;
+ }
+ if (Array.isArray(draft.axesVals) && draft.axesVals.length === 5) {
+ state.axesVals = [...draft.axesVals];
+ }
+ if (typeof draft.overallRating === 'number') {
+ document.getElementById('overallRating').value = draft.overallRating;
+ document.getElementById('overallRatingVal').textContent = `${draft.overallRating.toFixed(1)} / 5.0`;
+ }
+ if (draft.judgingStyleId) {
+ const s = STYLES_114.find(x => x.id === draft.judgingStyleId);
+ if (s) {
+ state.judgingStyle = s;
+ document.getElementById('jgStyleTitle').textContent = `${s.id}. ${s.nameJa}`;
+ document.getElementById('jgStyleSpecs').textContent = s.specs;
+ document.getElementById('jgStyleDesc').textContent = s.desc;
+ }
+ }
+ if (draft.judgingScores) {
+ document.getElementById('score-app').value = draft.judgingScores.app || 5;
+ document.getElementById('score-aro').value = draft.judgingScores.aro || 10;
+ document.getElementById('score-fla').value = draft.judgingScores.fla || 17;
+ document.getElementById('score-mou').value = draft.judgingScores.mou || 4;
+ document.getElementById('score-ove').value = draft.judgingScores.ove || 6;
+ }
+ if (draft.deductions) {
+ state.deductions = {
+ app: [...(draft.deductions.app || [])],
+ aro: [...(draft.deductions.aro || [])],
+ fla: [...(draft.deductions.fla || [])],
+ mou: [...(draft.deductions.mou || [])]
+ };
+ }
+ if (Array.isArray(draft.selectedTags)) {
+ state.selectedTags = [...draft.selectedTags];
+ }
+ if (draft.photoDataUrl) {
+ state.photoDataUrl = draft.photoDataUrl;
+ state.photoImgObj = null;
+ const prev = document.getElementById('photoPreview');
+ prev.src = draft.photoDataUrl;
+ prev.classList.remove('hidden');
+ document.getElementById('photoPlaceholder').classList.add('hidden');
+ }
+
+ renderQuickStyles();
+ renderSliders();
+ renderDeductionChips();
+ renderFlavorTags();
+ updateJudging();
+ if (draft.mode === 'judging') setMode('judging');
+ else setMode('subjective');
+ drawShareCard();
+}
+
+function clearCurrentDraft() {
+ if (!confirm('現在入力中の内容をクリアして初期状態に戻しますか？')) return;
+ document.getElementById('beerName').value = '';
+ document.getElementById('breweryName').value = '';
+ document.getElementById('venueName').value = '';
+ document.getElementById('abvIbu').value = '';
+ document.getElementById('tastingComment').value = '';
+ state.photoDataUrl = null;
+ state.photoImgObj = null;
+ document.getElementById('photoPreview').classList.add('hidden');
+ document.getElementById('photoPlaceholder').classList.remove('hidden');
+ state.quickStyle = QUICK_STYLES[0].name;
+ state.axesVals = [...QUICK_STYLES[0].vals];
+ document.getElementById('selectedQuickStyleLabel').textContent = state.quickStyle;
+ document.getElementById('overallRating').value = 4.0;
+ document.getElementById('overallRatingVal').textContent = '4.0 / 5.0';
+ state.deductions = { app: [], aro: [], fla: [], mou: [] };
+ state.selectedTags = ['シトラス・柑橘', '松脂・ダンク'];
+ document.getElementById('score-app').value = 5;
+ document.getElementById('score-aro').value = 10;
+ document.getElementById('score-fla').value = 17;
+ document.getElementById('score-mou').value = 4;
+ document.getElementById('score-ove').value = 6;
+ renderQuickStyles();
+ renderSliders();
+ renderDeductionChips();
+ renderFlavorTags();
+ updateJudging();
+ drawShareCard();
+ saveDraftNow();
+}
+
+</script>
+</body>
+</html>
