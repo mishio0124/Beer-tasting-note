@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Beer Note">
 <meta name="theme-color" content="#0f1115">
-<title>Beer Tasting Note v2.8</title>
+<title>Beer Tasting Note v3.10</title>
 <style>
  :root {
  --bg-main: #0f1115;
@@ -553,6 +553,112 @@
  overflow: hidden;
  text-overflow: ellipsis;
  }
+
+ /* JCBA 50-Point Deduction Sheet */
+ .jcba-row {
+ margin-bottom: 10px;
+ padding-bottom: 8px;
+ border-bottom: 1px dashed var(--border-color);
+ }
+ .jcba-row:last-child {
+ margin-bottom: 0;
+ padding-bottom: 0;
+ border-bottom: none;
+ }
+ .jcba-row-head {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ font-size: 11px;
+ font-weight: 700;
+ margin-bottom: 5px;
+ }
+ .jcba-ded {
+ font-size: 11px;
+ font-weight: 800;
+ color: #f87171;
+ }
+ .jcba-ded.zero {
+ color: var(--text-muted);
+ font-weight: 600;
+ }
+ .jcba-grid-3 {
+ display: grid;
+ grid-template-columns: repeat(3, 1fr);
+ gap: 5px;
+ }
+ .jcba-grid-4 {
+ display: grid;
+ grid-template-columns: repeat(4, 1fr);
+ gap: 4px;
+ }
+ .jcba-grid-5 {
+ display: grid;
+ grid-template-columns: repeat(5, 1fr);
+ gap: 3px;
+ }
+ .jcba-grid-5 .jcba-cell {
+ padding: 6px 2px;
+ font-size: 9.5px;
+ letter-spacing: -0.02em;
+ }
+ .jcba-cell {
+ background-color: var(--bg-card);
+ color: var(--text-main);
+ border: 2px solid var(--border-color);
+ border-radius: 8px;
+ padding: 6px 3px;
+ font-size: 10px;
+ font-weight: 700;
+ cursor: pointer;
+ text-align: center;
+ line-height: 1.25;
+ position: relative;
+ transition: 0.12s;
+ }
+ .jcba-cell.is-guide {
+ border-color: #3b82f6;
+ box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.45);
+ }
+ .jcba-cell.is-actual {
+ background-color: rgba(239, 68, 68, 0.22);
+ color: #fca5a5;
+ border-color: #ef4444;
+ }
+ [data-theme="light"] .jcba-cell.is-actual,
+ [data-theme="mono"] .jcba-cell.is-actual {
+ background-color: rgba(239, 68, 68, 0.16);
+ color: #b91c1c;
+ }
+ .jcba-cell.is-guide.is-actual {
+ border-color: #3b82f6;
+ background-color: rgba(239, 68, 68, 0.22);
+ box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.65);
+ }
+ .jcba-legend {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ gap: 6px;
+ flex-wrap: wrap;
+ background: var(--bg-input);
+ border-radius: 10px;
+ padding: 7px 10px;
+ margin-bottom: 10px;
+ font-size: 10px;
+ }
+ .jcba-subbox {
+ background: rgba(0, 0, 0, 0.14);
+ border: 1px solid var(--border-color);
+ border-radius: 10px;
+ padding: 8px;
+ margin: 8px 0;
+ }
+ [data-theme="light"] .jcba-subbox,
+ [data-theme="mono"] .jcba-subbox {
+ background: rgba(0, 0, 0, 0.03);
+ }
+
 </style>
 </head>
 <body data-theme="dark">
@@ -562,7 +668,7 @@
  <div class="header-inner">
  <div class="brand">
  <div class="brand-icon">🍺</div>
- <div class="brand-title">Beer Tasting Note <span style="font-size:10px;opacity:0.65;font-weight:600;">v2.8</span></div>
+ <div class="brand-title">Beer Tasting Note <span style="font-size:10px;opacity:0.65;font-weight:600;">v3.10</span></div>
  </div>
  <div class="header-actions">
  <button type="button" onclick="cycleTheme()" class="btn-pill">🎨 <span id="themeLabel">Dark</span></button>
@@ -579,10 +685,10 @@
  <!-- Mode Switcher -->
  <div class="mode-switch">
  <button type="button" id="btn-mode-subjective" onclick="setMode('subjective')" class="mode-btn active">
- 主観モード（5軸チャート）
+ 主観モード
  </button>
  <button type="button" id="btn-mode-judging" onclick="setMode('judging')" class="mode-btn">
- 審査モード（50点減点式）
+ 審査モード
  </button>
  </div>
 
@@ -657,54 +763,64 @@
  <p id="jgStyleDesc" style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">強烈なホップの苦味と柑橘・松脂・トロピカルなアロマ。クリーンな発酵とドライな後味。</p>
  <div style="display:flex;gap:6px;flex-wrap:wrap;">
  <button type="button" onclick="openStyleDetailModal(state.judgingStyle.id)" class="chip active" style="font-size:11px;padding:5px 10px;">📋 項目別基準（外観・香り・味…）</button>
- <a id="jgWebDirectLink" href="https://www.beertaster.org/beerstyle/" target="_blank" rel="noopener noreferrer" class="chip" style="text-decoration:none;display:inline-flex;align-items:center;font-size:11px;padding:5px 10px;">🌐 Web原文を開く</a>
+ <button type="button" onclick="openGuidelineWebSafely(state.judgingStyle)" class="chip" style="font-size:11px;padding:5px 10px;">🌐 Web本文を開く</button>
  </div>
  </div>
  </section>
 
  <section class="card">
  <div class="sec-head">
- <span class="sec-label">項目別スコア（50点満点）</span>
+ <span class="sec-label">項目別スコア（50点満点・減点式）</span>
  <div>
- <span id="judgingTotalScore" class="accent-label" style="font-size:18px;">42</span>
+ <span id="judgingTotalScore" class="accent-label" style="font-size:18px;">45</span>
  <span style="font-size:11px;color:var(--text-muted);">/ 50点</span>
  </div>
  </div>
 
- <div class="judge-box">
- <div class="slider-row-head">
- <span>1. アピアランス（外観・泡持ち）</span>
- <span id="val-app" class="accent-label">5 / 6</span>
+ <div class="jcba-legend">
+ <div style="display:flex;gap:10px;align-items:center;">
+ <span><span style="display:inline-block;width:10px;height:10px;border:2px solid #3b82f6;border-radius:3px;vertical-align:middle;margin-right:3px;"></span>青枠＝基準</span>
+ <span><span style="display:inline-block;width:10px;height:10px;background:rgba(239,68,68,0.35);border:2px solid #ef4444;border-radius:3px;vertical-align:middle;margin-right:3px;"></span>赤＝このビール</span>
  </div>
- <input type="range" id="score-app" min="1" max="6" step="1" value="5" oninput="updateJudging()" />
- <div id="deduct-app" class="chip-wrap" style="margin-top:8px;"></div>
- </div>
-
- <div class="judge-box">
- <div class="slider-row-head">
- <span>2. アロマ（香り・オフフレーバー有無）</span>
- <span id="val-aro" class="accent-label">10 / 12</span>
- </div>
- <input type="range" id="score-aro" min="1" max="12" step="1" value="10" oninput="updateJudging()" />
- <div id="deduct-aro" class="chip-wrap" style="margin-top:8px;"></div>
+ <button type="button" id="btnToggleGuideEdit" onclick="toggleGuideEditMode()" class="chip" style="padding:4px 8px;font-size:10px;">⚙️ 基準編集: OFF</button>
  </div>
 
+ <!-- 1. 外観印象 (6点) -->
  <div class="judge-box">
- <div class="slider-row-head">
- <span>3. フレーバー（味わい・バランス）</span>
- <span id="val-fla" class="accent-label">17 / 20</span>
+ <div class="slider-row-head" style="margin-bottom:8px;">
+ <span>1. 外観印象</span>
+ <span id="val-app" class="accent-label">6 / 6</span>
  </div>
- <input type="range" id="score-fla" min="1" max="20" step="1" value="17" oninput="updateJudging()" />
- <div id="deduct-fla" class="chip-wrap" style="margin-top:8px;"></div>
+ <div id="jcba-app"></div>
  </div>
 
+ <!-- 2. アロマ (10点) -->
+ <div class="judge-box">
+ <div class="slider-row-head" style="margin-bottom:8px;">
+ <span>2. アロマ（モルト3・ホップ3・その他4）</span>
+ <span id="val-aro" class="accent-label">10 / 10</span>
+ </div>
+ <div id="jcba-aro"></div>
+ <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">※「その他（4点）」はフルーティー＋他のアロマの合算減点（最大-4点まで）</div>
+ </div>
+
+ <!-- 3. フレーバー (19点) -->
+ <div class="judge-box">
+ <div class="slider-row-head" style="margin-bottom:8px;">
+ <span>3. フレーバー（計19点）</span>
+ <span id="val-fla" class="accent-label">19 / 19</span>
+ </div>
+ <div id="jcba-fla"></div>
+ <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">※バランス（最大-4点）・その他（最大-4点）は合算上限あり</div>
+ </div>
+
+ <!-- 4. ボディ (5点) -->
  <div class="judge-box" style="margin-bottom:0;">
- <div class="slider-row-head">
- <span>4. マウスフィール（ボディ・炭酸）</span>
- <span id="val-mou" class="accent-label">4 / 5</span>
+ <div class="slider-row-head" style="margin-bottom:8px;">
+ <span>4. ボディ</span>
+ <span id="val-mou" class="accent-label">5 / 5</span>
  </div>
- <input type="range" id="score-mou" min="1" max="5" step="1" value="4" oninput="updateJudging()" />
- <div id="deduct-mou" class="chip-wrap" style="margin-top:8px;"></div>
+ <div id="jcba-mou"></div>
  </div>
  </section>
  </div>
@@ -717,14 +833,26 @@
  <div id="flavorTagsContainer" class="chip-wrap"></div>
  </section>
 
+ <!-- Off-Flavors & Defects -->
+ <section class="card">
+ <div class="sec-head">
+ <span class="sec-label">オフフレーバー・欠陥チェック（複数選択）</span>
+ <span id="offFlavorCount" class="sec-label">0件</span>
+ </div>
+ <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;font-weight:700;">基本オフフレーバー（6種）</div>
+ <div id="offFlavorCoreContainer" class="chip-wrap" style="margin-bottom:10px;"></div>
+ <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;font-weight:700;">その他の欠陥・状態</div>
+ <div id="offFlavorExtraContainer" class="chip-wrap"></div>
+ </section>
+
  <!-- Overall Impression -->
  <section class="card">
  <div id="judgingOverallBox" class="hidden" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-color);">
  <div class="slider-row-head">
- <span>5. 総合印象（スタイル忠実度・完成度）</span>
- <span id="val-ove" class="accent-label">6 / 7</span>
+ <span>5. 全体印象（完成度・まとまり・優れている点）</span>
+ <span id="val-ove" class="accent-label">5 / 10</span>
  </div>
- <input type="range" id="score-ove" min="1" max="7" step="1" value="6" oninput="updateJudging()" />
+ <input type="range" id="score-ove" min="1" max="10" step="1" value="5" oninput="updateJudging()" />
  </div>
  <div class="sec-head" style="margin-bottom:6px;">
  <span class="sec-label">テイスティングノート / 総評</span>
@@ -750,13 +878,21 @@
  <canvas id="shareCanvas" width="1080" height="1080"></canvas>
  </div>
 
- <div class="action-grid">
+ <div class="action-grid" style="margin-bottom:10px;">
  <button type="button" onclick="shareOrDownloadCard()" class="btn-secondary">📤 画像を保存・シェア</button>
  <button type="button" onclick="copyShareText()" class="btn-secondary">📋 SNS投稿文をコピー</button>
+ </div>
+ <div style="background:var(--bg-input);border:1px solid var(--border-color);border-radius:12px;padding:10px;">
+ <div class="sec-head" style="margin-bottom:4px;">
+ <span class="sec-label">SNS投稿文プレビュー（このままコピーされます）</span>
+ <span id="snsCopyStatus" class="accent-label" style="font-size:10px;"></span>
+ </div>
+ <pre id="snsPostPreview" style="white-space:pre-wrap;word-break:break-all;font-family:inherit;font-size:12px;color:var(--text-main);line-height:1.55;"></pre>
  </div>
  </section>
 
  <!-- Save Button -->
+ <div id="recordStatusBanner" class="hidden" style="background:var(--bg-card);border:1px solid #f87171;color:#fca5a5;border-radius:12px;padding:10px 12px;font-size:12px;font-weight:700;"></div>
  <button type="button" onclick="saveRecord()" class="btn-primary">
  ✅ このテイスティング記録を保存する
  </button>
@@ -866,17 +1002,40 @@
  </div>
 
  <div style="background:var(--bg-input);padding:10px 12px;border-radius:12px;display:flex;flex-direction:column;gap:8px;">
- <div style="font-size:11px;color:var(--text-muted);">公式ガイドライン原文の該当箇所を確認する：</div>
+ <div style="font-size:11px;color:var(--text-muted);">公式ガイドライン（2026年版）の個別ページを開く：</div>
+ <div id="sdUrlPreview" style="font-size:10px;color:var(--accent);word-break:break-all;font-family:monospace;"></div>
  <div class="action-grid">
- <a id="sdWebLink" href="https://www.beertaster.org/beerstyle/" target="_blank" rel="noopener noreferrer" class="btn-primary" style="padding:10px;font-size:12px;text-align:center;text-decoration:none;display:block;">🌐 Web本文へジャンプ</a>
- <button type="button" onclick="copyStyleQueryForWeb()" class="btn-secondary" style="padding:10px;font-size:12px;">📋 スタイル名をコピー</button>
+ <button type="button" onclick="openGuidelineWebSafely(currentDetailStyle)" class="btn-primary" style="padding:10px;font-size:12px;">🌐 Web本文を開く</button>
+ <a id="sdSearchLink" href="https://www.google.com/search?q=" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="padding:10px;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">🔍 Webで検索</a>
  </div>
+ <button type="button" onclick="copyStyleQueryForWeb()" class="btn-secondary" style="padding:8px;font-size:11px;">📋 スタイル名をコピー</button>
  <div style="display:flex;gap:6px;align-items:center;margin-top:2px;">
- <input type="text" id="customGuidelineUrl" placeholder="公式ガイドラインURL（変更可）" style="font-size:11px;padding:6px 8px;" onchange="saveGuidelineUrl(this.value)" />
+ <input type="text" id="customGuidelineUrl" placeholder="ベースURL（例: https://beertaster.org/beerstyle/2026_detail/）" style="font-size:11px;padding:6px 8px;" onchange="saveGuidelineUrl(this.value)" />
  </div>
  </div>
 
- <button type="button" id="sdApplyBtn" class="btn-primary" style="padding:11px;font-size:12px;">このスタイルを審査モードにセット</button>
+ <button type="button" id="sdApplyBtn"  class="btn-primary" style="padding:11px;font-size:12px;">このスタイルを審査モードにセット</button>
+ </div>
+ </div>
+</div>
+
+<!-- Data Export & Share Modal -->
+<div id="dataExportModal" class="modal-backdrop hidden">
+ <div class="modal-panel" style="max-width:480px;">
+ <div class="modal-header">
+ <div>
+ <div id="expModalTitle" style="font-size:14px;font-weight:800;">データ出力</div>
+ <div style="font-size:10px;color:var(--text-muted);">共有シートが開かない場合は「全文をコピー」をご利用ください</div>
+ </div>
+ <button type="button" onclick="closeDataExportModal()" class="btn-pill">✕</button>
+ </div>
+ <div class="modal-body stack">
+ <div class="action-grid">
+ <button type="button" id="expShareFileBtn" class="btn-primary" style="padding:10px;font-size:12px;">📤 ファイル共有・保存</button>
+ <button type="button" id="expCopyAllBtn" class="btn-secondary" style="padding:10px;font-size:12px;">📋 全文をコピー</button>
+ </div>
+ <textarea id="expTextArea" rows="10" readonly style="font-size:11px;font-family:monospace;line-height:1.4;"></textarea>
+ <button type="button" onclick="closeDataExportModal()" class="btn-secondary" style="padding:10px;font-size:12px;">閉じる</button>
  </div>
  </div>
 </div>
@@ -927,6 +1086,14 @@ const FLAVOR_TAGS = [
  'シトラス・柑橘', 'トロピカル', '松脂・ダンク', 'フローラル', 'ハーバル',
  'ビスケット・パン', 'カラメル・トフィー', 'ロースト・コーヒー', 'チョコレート',
  'バナナ・エステル', 'クローブ・スパイス', 'クリーン・クリスプ', 'サワー・乳酸', 'ファンキー・ブレット'
+];
+
+const OFF_FLAVOR_CORE = [
+ 'DMS', 'ダイアセチル', '紙臭（酸化）', '日光臭', 'フェノール', '金属臭（メタリック）'
+];
+const OFF_FLAVOR_EXTRA = [
+ 'カニ泡', '沈殿物', 'イースティ', 'アセトアルデヒド', '硫黄臭', '枯草',
+ 'チーズ臭', 'ホップの鮮度', 'モルトの鮮度', '乳酸菌', '酢酸菌', '樟脳臭', '黴臭'
 ];
 
 const DEDUCTION_OPTIONS = {
@@ -1114,6 +1281,7 @@ let state = {
  judgingStyle: STYLES_114[141],
  deductions: { app: [], aro: [], fla: [], mou: [] },
  selectedTags: ['シトラス・柑橘', '松脂・ダンク'],
+ selectedOffFlavors: [],
  photoDataUrl: null,
  photoImgObj: null,
  historyFilter: 'all',
@@ -1185,6 +1353,7 @@ function bootstrapApp() {
  renderSliders();
  renderDeductionChips();
  renderFlavorTags();
+ renderOffFlavors();
  bindInputs();
  updateJudging();
  drawShareCard();
@@ -1200,7 +1369,7 @@ if (document.readyState === 'loading') {
 function bindInputs() {
  ['beerName', 'breweryName', 'venueName', 'abvIbu', 'tastingComment'].forEach(id => {
  const el = document.getElementById(id);
- if (el) el.addEventListener('input', () => { drawShareCard(); scheduleDraftSave(); });
+ if (el) el.addEventListener('input', () => { drawShareCard(); updateSharePreview(); scheduleDraftSave(); });
  });
  document.addEventListener('click', (e) => {
  const wrap = document.getElementById('judgingDropdownWrap');
@@ -1291,53 +1460,378 @@ function updateSubjective() {
  scheduleDraftSave();
 }
 
-function renderDeductionChips() {
- Object.keys(DEDUCTION_OPTIONS).forEach(cat => {
- const cont = document.getElementById(`deduct-${cat}`);
- if (!cont) return;
- cont.innerHTML = DEDUCTION_OPTIONS[cat].map(label => {
- const active = (state.deductions[cat] || []).includes(label);
- return `<button type="button" onclick="toggleDeduction('${cat}', '${label}')" class="chip ${active ? 'active' : ''}" style="padding:3px 7px;font-size:10px;">${label}</button>`;
- }).join('');
- });
+
+let guideEditMode = false;
+
+const JCBA_SCHEMA = {
+  app: [
+    { key: 'color', label: '色（2点・スタイル基準比）', maxDed: 2, fixedGuide: true, opts: ['かなり<br>淡い', 'やや<br>淡い', '基準通り', 'やや<br>濃い', 'かなり<br>濃い'] },
+    { key: 'clarity', label: '透明度（2点）', maxDed: 2, opts: ['1. クリア', '2. ややかすむ', '3. 濁っている'] },
+    { key: 'head', label: '泡持ち（2点）', maxDed: 2, opts: ['1. 少ない', '2. 普通', '3. 豊か'] }
+  ],
+  aroTop: [
+    { key: 'malt', label: 'モルト（3点）', maxDed: 3, opts: ['1. なし', '2. 低い', '3. 中程度', '4. 高い'] },
+    { key: 'hop', label: 'ホップ（3点）', maxDed: 3, opts: ['1. なし', '2. 低い', '3. 中程度', '4. 高い'] }
+  ],
+  aroOther: [
+    { key: 'fruity', label: 'フルーティー', opts: ['1. なし', '2. 低い', '3. 中程度', '4. 高い'] },
+    { key: 'other', label: '他のアロマ', opts: ['1. なし', '2. 低い', '3. 中程度', '4. 高い'] }
+  ],
+  flaTop: [
+    { key: 'malt', label: 'モルト（3点）', maxDed: 3, opts: ['1. なし', '2. 低い', '3. 中程度', '4. 高い'] },
+    { key: 'hop', label: 'ホップ（3点）', maxDed: 3, opts: ['1. なし', '2. 低い', '3. 中程度', '4. 高い'] }
+  ],
+  flaBal: [
+    { key: 'maltSweet', label: 'モルトの甘味', opts: ['1. なし', '2. 低い', '3. 中程度', '4. 高い'] },
+    { key: 'hopBitter', label: 'ホップの苦味', opts: ['1. なし', '2. 低い', '3. 中程度', '4. 高い'] }
+  ],
+  flaOther: [
+    { key: 'fruity', label: 'フルーティー', opts: ['1. なし', '2. 低い', '3. 中程度', '4. 高い'] },
+    { key: 'other', label: 'その他のフレーバー', opts: ['1. なし', '2. 低い', '3. 中程度', '4. 高い'] }
+  ],
+  condOpts: ['熟成', '鮮度', '酸化', '汚染'],
+  afterOpts: ['渋み', '不快な苦味', '不快な甘味', '雑味・えぐみ', 'その他'],
+  bodyOpts: ['1. ライト', '2. ミディアム', '3. フル'],
+  carbOpts: [
+    { val: 'low', label: '不足 (-1)' },
+    { val: 'ok', label: '適正 (0)' },
+    { val: 'high', label: '過剰 (-1)' }
+  ]
+};
+
+function createDefaultJCBA(styleObj) {
+  const s = styleObj || state.judgingStyle || STYLES_114[141];
+  const specs = (s.specs || '');
+  const desc = (s.desc || '') + ' ' + (s.nameJa || '') + ' ' + (s.cat || '');
+  // Color uses 5-level relative scale centered at 3 (基準通り)
+  let colorG = [3];
+
+  // Estimate Clarity (1=clear, 2=slightly hazy, 3=hazy)
+  let clarityG = [1];
+  if (/ヘイジー|Hazy|ヴァイツェン|ウィット|酵母入り|ケラー|未濾過/.test(desc)) clarityG = [2, 3];
+
+  // Estimate Head (1=low, 2=normal, 3=rich)
+  let headG = [2, 3];
+  if (/サハティ|無炭酸/.test(desc)) headG = [1];
+
+  // Estimate Hop / Bitterness from IBU
+  let hopG = [2, 3];
+  let bitterG = [2, 3];
+  if (/IPA|インディア/.test(desc)) { hopG = [3, 4]; bitterG = [3, 4]; }
+  else if (/ピルスナー/.test(desc)) { hopG = [2, 3]; bitterG = [3]; }
+  else if (/ヴァイツェン|ウィット|サワー|ゴーゼ|フルーツ/.test(desc)) { hopG = [1, 2]; bitterG = [1, 2]; }
+
+  // Estimate Malt / Sweetness
+  let maltG = [2, 3];
+  let sweetG = [2];
+  if (/ボック|バーレー|スコッチ|スタウト|デュッベル|クァドルペル|アンバー|メルツェン/.test(desc)) { maltG = [3, 4]; sweetG = [3, 4]; }
+  else if (/ドライ|ライトラガー|ピルスナー|セゾン/.test(desc)) { sweetG = [1, 2]; }
+
+  // Estimate Fruity
+  let fruityG = [1, 2];
+  if (/ラガー/.test(s.cat || '')) fruityG = [1];
+  else if (/ヴァイツェン|ベルギー|フルーツ|ヘイジー|セゾン/.test(desc)) fruityG = [3, 4];
+
+  // Estimate Body (1=light, 2=medium, 3=full)
+  let bodyG = [2];
+  if (/ライト|セッション|ピルスナー|ベルリナー|ゴーゼ/.test(desc)) bodyG = [1, 2];
+  else if (/インペリアル|バーレー|ドッペル|アイスボック|クァドルペル/.test(desc)) bodyG = [3];
+
+  const pickFirst = arr => arr[0];
+  return {
+    app: {
+      clarity: { guide: clarityG, actual: pickFirst(clarityG) },
+      color: { guide: [3], actual: 3, rel5: true },
+      head: { guide: headG, actual: pickFirst(headG) }
+    },
+    aro: {
+      hop: { guide: hopG, actual: pickFirst(hopG) },
+      malt: { guide: maltG, actual: pickFirst(maltG) },
+      fruity: { guide: fruityG, actual: pickFirst(fruityG) },
+      other: { guide: [1], actual: 1 }
+    },
+    fla: {
+      hop: { guide: [...hopG], actual: pickFirst(hopG) },
+      malt: { guide: [...maltG], actual: pickFirst(maltG) },
+      conditions: [],
+      aftertaste: [],
+      maltSweet: { guide: sweetG, actual: pickFirst(sweetG) },
+      hopBitter: { guide: bitterG, actual: pickFirst(bitterG) },
+      fruity: { guide: [...fruityG], actual: pickFirst(fruityG) },
+      other: { guide: [1], actual: 1 }
+    },
+    mou: {
+      body: { guide: bodyG, actual: pickFirst(bodyG) },
+      carb: 'ok'
+    }
+  };
 }
 
-function toggleDeduction(cat, label) {
- const arr = state.deductions[cat] || [];
- if (arr.includes(label)) {
- state.deductions[cat] = arr.filter(x => x !== label);
- } else {
- state.deductions[cat] = [...arr, label];
- }
- renderDeductionChips();
- drawShareCard();
- scheduleDraftSave();
+state.jcba = createDefaultJCBA(state.judgingStyle);
+
+function applyStyleToJCBA(styleObj) {
+  state.jcba = createDefaultJCBA(styleObj);
+  renderDeductionChips();
+  updateJudging();
+}
+
+function toggleGuideEditMode() {
+  guideEditMode = !guideEditMode;
+  const btn = document.getElementById('btnToggleGuideEdit');
+  if (btn) {
+    btn.textContent = guideEditMode ? '⚙️ 基準編集: ON（青枠を変更）' : '⚙️ 基準編集: OFF';
+    btn.classList.toggle('active', guideEditMode);
+  }
+}
+
+function calcScaleDed(item) {
+  if (!item || !item.guide || !item.guide.length) return 0;
+  const minG = Math.min(...item.guide);
+  const maxG = Math.max(...item.guide);
+  if (item.actual < minG) return minG - item.actual;
+  if (item.actual > maxG) return item.actual - maxG;
+  return 0;
+}
+
+function normalizeJCBAColor(j) {
+  if (j && j.app && j.app.color && !j.app.color.rel5) {
+    const oldDed = calcScaleDed(j.app.color);
+    const minG = Math.min(...(j.app.color.guide || [2]));
+    const maxG = Math.max(...(j.app.color.guide || [2]));
+    let newAct = 3;
+    if (j.app.color.actual < minG) newAct = Math.max(1, 3 - oldDed);
+    else if (j.app.color.actual > maxG) newAct = Math.min(5, 3 + oldDed);
+    j.app.color = { guide: [3], actual: newAct, rel5: true };
+  }
+  return j;
+}
+
+function calcJCBAScores() {
+  const j = state.jcba || createDefaultJCBA(state.judgingStyle);
+
+  // 1. 外観印象 (6点: 色2 + 透明度2 + 泡持ち2)
+  const appColorDed = Math.min(2, calcScaleDed(j.app.color));
+  const appClarityDed = Math.min(2, calcScaleDed(j.app.clarity));
+  const appHeadDed = Math.min(2, calcScaleDed(j.app.head));
+  const appDed = appColorDed + appClarityDed + appHeadDed;
+  const app = Math.max(0, 6 - appDed);
+
+  // 2. アロマ (10点: モルト3 + ホップ3 + その他4)
+  const aroMaltDed = Math.min(3, calcScaleDed(j.aro.malt));
+  const aroHopDed = Math.min(3, calcScaleDed(j.aro.hop));
+  const aroOtherDed = Math.min(4, calcScaleDed(j.aro.fruity) + calcScaleDed(j.aro.other));
+  const aroDed = aroMaltDed + aroHopDed + aroOtherDed;
+  const aro = Math.max(0, 10 - aroDed);
+
+  // 3. フレーバー (19点: モルト3 + ホップ3 + 状態2 + アフターテイスト3 + バランス4 + その他4)
+  const flaMaltDed = Math.min(3, calcScaleDed(j.fla.malt));
+  const flaHopDed = Math.min(3, calcScaleDed(j.fla.hop));
+  const condDed = Math.min(2, (j.fla.conditions || []).length);
+  const afterDed = Math.min(3, (j.fla.aftertaste || []).length);
+  const balDed = Math.min(4, calcScaleDed(j.fla.maltSweet) + calcScaleDed(j.fla.hopBitter));
+  const flaOtherDed = Math.min(4, calcScaleDed(j.fla.fruity) + calcScaleDed(j.fla.other));
+  const flaDed = flaMaltDed + flaHopDed + condDed + afterDed + balDed + flaOtherDed;
+  const fla = Math.max(0, 19 - flaDed);
+
+  // 4. ボディ (5点: ボディ + カーボネーション)
+  const carbDed = (j.mou.carb === 'ok') ? 0 : 1;
+  const mouDed = Math.min(5, calcScaleDed(j.mou.body) + carbDed);
+  const mou = Math.max(0, 5 - mouDed);
+
+  // 5. 全体印象 (10点)
+  const oveEl = document.getElementById('score-ove');
+  const ove = oveEl ? parseInt(oveEl.value) : 5;
+
+  return {
+    app, aro, fla, mou, ove,
+    total: app + aro + fla + mou + ove,
+    appDed, aroDed, aroOtherDed, flaDed, balDed, flaOtherDed, condDed, afterDed, mouDed
+  };
+}
+
+function onJCBACellTap(sec, key, val) {
+  const item = state.jcba[sec][key];
+  const isFixedGuide = (sec === 'app' && key === 'color');
+  if (guideEditMode && !isFixedGuide) {
+    const idx = item.guide.indexOf(val);
+    if (idx >= 0) {
+      if (item.guide.length > 1) item.guide.splice(idx, 1);
+    } else {
+      item.guide.push(val);
+      item.guide.sort((a, b) => a - b);
+    }
+  } else {
+    item.actual = val;
+  }
+  renderDeductionChips();
+  updateJudging();
+}
+
+function toggleJCBAChip(listKey, label) {
+  const arr = state.jcba.fla[listKey] || [];
+  if (arr.includes(label)) {
+    state.jcba.fla[listKey] = arr.filter(x => x !== label);
+  } else {
+    state.jcba.fla[listKey] = [...arr, label];
+  }
+  renderDeductionChips();
+  updateJudging();
+}
+
+function setJCBACarb(val) {
+  state.jcba.mou.carb = val;
+  renderDeductionChips();
+  updateJudging();
+}
+
+function renderScaleRow(sec, def) {
+  const item = state.jcba[sec][def.key];
+  const rawDed = calcScaleDed(item);
+  const ded = def.maxDed ? Math.min(def.maxDed, rawDed) : rawDed;
+  const gridCls = def.opts.length === 3 ? 'jcba-grid-3' : (def.opts.length === 5 ? 'jcba-grid-5' : 'jcba-grid-4');
+  const cells = def.opts.map((txt, idx) => {
+    const v = idx + 1;
+    const gCls = item.guide.includes(v) ? 'is-guide' : '';
+    const aCls = item.actual === v ? 'is-actual' : '';
+    return `<button type="button" onclick="onJCBACellTap('${sec}','${def.key}',${v})" class="jcba-cell ${gCls} ${aCls}">${txt}</button>`;
+  }).join('');
+  return `
+    <div class="jcba-row">
+      <div class="jcba-row-head">
+        <span>${def.label}</span>
+        <span class="jcba-ded ${ded === 0 ? 'zero' : ''}">${ded === 0 ? '適切 (0)' : '-' + ded + '点'}</span>
+      </div>
+      <div class="${gridCls}">${cells}</div>
+    </div>`;
+}
+
+function renderDeductionChips() {
+  const j = state.jcba;
+  const appEl = document.getElementById('jcba-app');
+  if (appEl) {
+    appEl.innerHTML = JCBA_SCHEMA.app.map(d => renderScaleRow('app', d)).join('');
+  }
+  const aroEl = document.getElementById('jcba-aro');
+  if (aroEl) {
+    const aroOtherDed = Math.min(4, calcScaleDed(j.aro.fruity) + calcScaleDed(j.aro.other));
+    const aroOtherHtml = `
+      <div class="jcba-subbox" style="margin-bottom:0;">
+        <div class="jcba-row-head" style="margin-bottom:6px;">
+          <span style="color:var(--accent);">その他（4点・合計マイナス4点まで）</span>
+          <span class="jcba-ded ${aroOtherDed === 0 ? 'zero' : ''}">${aroOtherDed === 0 ? '適切 (0)' : '-' + aroOtherDed + '点'}</span>
+        </div>
+        ${JCBA_SCHEMA.aroOther.map(d => renderScaleRow('aro', d)).join('')}
+      </div>`;
+    aroEl.innerHTML = JCBA_SCHEMA.aroTop.map(d => renderScaleRow('aro', d)).join('') + aroOtherHtml;
+  }
+  const flaEl = document.getElementById('jcba-fla');
+  if (flaEl) {
+    const condDed = Math.min(2, (j.fla.conditions || []).length);
+    const afterDed = Math.min(3, (j.fla.aftertaste || []).length);
+    const balDed = Math.min(4, calcScaleDed(j.fla.maltSweet) + calcScaleDed(j.fla.hopBitter));
+    const flaOtherDed = Math.min(4, calcScaleDed(j.fla.fruity) + calcScaleDed(j.fla.other));
+    const condHtml = `
+      <div class="jcba-row">
+        <div class="jcba-row-head">
+          <span>状態（2点：1項目-1 / 2項目以上-2）</span>
+          <span class="jcba-ded ${condDed === 0 ? 'zero' : ''}">${condDed === 0 ? '適切 (0)' : '-' + condDed + '点'}</span>
+        </div>
+        <div class="chip-wrap">${JCBA_SCHEMA.condOpts.map(lbl => {
+          const act = (j.fla.conditions || []).includes(lbl);
+          return `<button type="button" onclick="toggleJCBAChip('conditions','${lbl}')" class="chip ${act ? 'active' : ''}" style="padding:4px 9px;font-size:10px;">${lbl}</button>`;
+        }).join('')}</div>
+      </div>`;
+    const afterHtml = `
+      <div class="jcba-row">
+        <div class="jcba-row-head">
+          <span>アフターテイスト（3点：1項目-1 / 最大-3）</span>
+          <span class="jcba-ded ${afterDed === 0 ? 'zero' : ''}">${afterDed === 0 ? '適切 (0)' : '-' + afterDed + '点'}</span>
+        </div>
+        <div class="chip-wrap">${JCBA_SCHEMA.afterOpts.map(lbl => {
+          const act = (j.fla.aftertaste || []).includes(lbl);
+          return `<button type="button" onclick="toggleJCBAChip('aftertaste','${lbl}')" class="chip ${act ? 'active' : ''}" style="padding:4px 9px;font-size:10px;">${lbl}</button>`;
+        }).join('')}</div>
+      </div>`;
+    const balHtml = `
+      <div class="jcba-subbox">
+        <div class="jcba-row-head" style="margin-bottom:6px;">
+          <span style="color:var(--accent);">バランス（4点・合計マイナス4点まで）</span>
+          <span class="jcba-ded ${balDed === 0 ? 'zero' : ''}">${balDed === 0 ? '適切 (0)' : '-' + balDed + '点'}</span>
+        </div>
+        ${JCBA_SCHEMA.flaBal.map(d => renderScaleRow('fla', d)).join('')}
+      </div>`;
+    const flaOtherHtml = `
+      <div class="jcba-subbox" style="margin-bottom:0;">
+        <div class="jcba-row-head" style="margin-bottom:6px;">
+          <span style="color:var(--accent);">その他（4点・合計マイナス4点まで）</span>
+          <span class="jcba-ded ${flaOtherDed === 0 ? 'zero' : ''}">${flaOtherDed === 0 ? '適切 (0)' : '-' + flaOtherDed + '点'}</span>
+        </div>
+        ${JCBA_SCHEMA.flaOther.map(d => renderScaleRow('fla', d)).join('')}
+      </div>`;
+    flaEl.innerHTML =
+      JCBA_SCHEMA.flaTop.map(d => renderScaleRow('fla', d)).join('') +
+      condHtml + afterHtml + balHtml + flaOtherHtml;
+  }
+  const mouEl = document.getElementById('jcba-mou');
+  if (mouEl) {
+    const carbDed = j.mou.carb === 'ok' ? 0 : 1;
+    const bodyRow = renderScaleRow('mou', { key: 'body', label: 'ボディ', opts: JCBA_SCHEMA.bodyOpts });
+    const carbRow = `
+      <div class="jcba-row">
+        <div class="jcba-row-head">
+          <span>カーボネーション</span>
+          <span class="jcba-ded ${carbDed === 0 ? 'zero' : ''}">${carbDed === 0 ? '適正 (0)' : '-1点'}</span>
+        </div>
+        <div class="jcba-grid-3">${JCBA_SCHEMA.carbOpts.map(o => {
+          const act = j.mou.carb === o.val;
+          const cls = act ? (o.val === 'ok' ? 'is-guide' : 'is-actual') : '';
+          return `<button type="button" onclick="setJCBACarb('${o.val}')" class="jcba-cell ${cls}">${o.label}</button>`;
+        }).join('')}</div>
+      </div>`;
+    mouEl.innerHTML = bodyRow + carbRow;
+  }
 }
 
 function getAllDeductionsList() {
- return [
- ...(state.deductions.app || []),
- ...(state.deductions.aro || []),
- ...(state.deductions.fla || []),
- ...(state.deductions.mou || [])
- ];
+  const j = state.jcba;
+  if (!j) return [];
+  const list = [];
+  const check = (sec, defs, prefix) => {
+    defs.forEach(d => {
+      const raw = calcScaleDed(j[sec][d.key]);
+      const ded = d.maxDed ? Math.min(d.maxDed, raw) : raw;
+      if (ded > 0) list.push(`${prefix}${d.label.replace(/（.*?）/g,'')}(-${ded})`);
+    });
+  };
+  check('app', JCBA_SCHEMA.app, '外観:');
+  check('aro', JCBA_SCHEMA.aroTop, '香り:');
+  const aroOtherDed = Math.min(4, calcScaleDed(j.aro.fruity) + calcScaleDed(j.aro.other));
+  if (aroOtherDed > 0) list.push(`香り:その他(-${aroOtherDed})`);
+  check('fla', JCBA_SCHEMA.flaTop, '味:');
+  if ((j.fla.conditions || []).length) list.push(`状態:${j.fla.conditions.join('・')}(-${Math.min(2, j.fla.conditions.length)})`);
+  if ((j.fla.aftertaste || []).length) list.push(`後味:${j.fla.aftertaste.join('・')}(-${Math.min(3, j.fla.aftertaste.length)})`);
+  const balDed = Math.min(4, calcScaleDed(j.fla.maltSweet) + calcScaleDed(j.fla.hopBitter));
+  if (balDed > 0) list.push(`バランス(-${balDed})`);
+  const flaOtherDed = Math.min(4, calcScaleDed(j.fla.fruity) + calcScaleDed(j.fla.other));
+  if (flaOtherDed > 0) list.push(`味:その他(-${flaOtherDed})`);
+  const bDed = calcScaleDed(j.mou.body);
+  if (bDed > 0) list.push(`ボディ(-${bDed})`);
+  if (j.mou.carb === 'low') list.push('炭酸不足(-1)');
+  if (j.mou.carb === 'high') list.push('炭酸過剰(-1)');
+  return list;
 }
 
 function updateJudging() {
- const app = parseInt(document.getElementById('score-app').value);
- const aro = parseInt(document.getElementById('score-aro').value);
- const fla = parseInt(document.getElementById('score-fla').value);
- const mou = parseInt(document.getElementById('score-mou').value);
- const ove = parseInt(document.getElementById('score-ove').value);
-
- document.getElementById('val-app').textContent = `${app} / 6`;
- document.getElementById('val-aro').textContent = `${aro} / 12`;
- document.getElementById('val-fla').textContent = `${fla} / 20`;
- document.getElementById('val-mou').textContent = `${mou} / 5`;
- document.getElementById('val-ove').textContent = `${ove} / 7`;
- document.getElementById('judgingTotalScore').textContent = app + aro + fla + mou + ove;
- drawShareCard();
- scheduleDraftSave();
+  const sc = calcJCBAScores();
+  const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  setTxt('val-app', `${sc.app} / 6${sc.appDed ? ` (-${sc.appDed})` : ''}`);
+  setTxt('val-aro', `${sc.aro} / 10${sc.aroDed ? ` (-${sc.aroDed})` : ''}`);
+  setTxt('val-fla', `${sc.fla} / 19${sc.flaDed ? ` (-${sc.flaDed})` : ''}`);
+  setTxt('val-mou', `${sc.mou} / 5${sc.mouDed ? ` (-${sc.mouDed})` : ''}`);
+  setTxt('val-ove', `${sc.ove} / 10`);
+  setTxt('judgingTotalScore', sc.total);
+  drawShareCard();
+  scheduleDraftSave();
 }
 
 function renderFlavorTags() {
@@ -1355,7 +1849,42 @@ function toggleFlavorTag(tag) {
  state.selectedTags.push(tag);
  }
  renderFlavorTags();
+ renderOffFlavors();
  drawShareCard();
+ scheduleDraftSave();
+}
+
+function renderOffFlavors() {
+ const coreCont = document.getElementById('offFlavorCoreContainer');
+ const extraCont = document.getElementById('offFlavorExtraContainer');
+ const cntEl = document.getElementById('offFlavorCount');
+ const sel = state.selectedOffFlavors || [];
+ if (coreCont) {
+ coreCont.innerHTML = OFF_FLAVOR_CORE.map(t => {
+ const active = sel.includes(t);
+ return `<button type="button" onclick="toggleOffFlavor('${t}')" class="chip rounded ${active ? 'active' : ''}">${t}</button>`;
+ }).join('');
+ }
+ if (extraCont) {
+ extraCont.innerHTML = OFF_FLAVOR_EXTRA.map(t => {
+ const active = sel.includes(t);
+ return `<button type="button" onclick="toggleOffFlavor('${t}')" class="chip rounded ${active ? 'active' : ''}">${t}</button>`;
+ }).join('');
+ }
+ if (cntEl) {
+ cntEl.textContent = `${sel.length}件`;
+ cntEl.style.color = sel.length > 0 ? '#f87171' : 'var(--text-muted)';
+ }
+}
+
+function toggleOffFlavor(tag) {
+ const sel = state.selectedOffFlavors || [];
+ if (sel.includes(tag)) {
+ state.selectedOffFlavors = sel.filter(t => t !== tag);
+ } else {
+ state.selectedOffFlavors = [...sel, tag];
+ }
+ renderOffFlavors();
  scheduleDraftSave();
 }
 
@@ -1583,6 +2112,7 @@ function selectJudgingStyle(id) {
  document.getElementById('jgStyleDesc').textContent = s.desc;
  document.getElementById('judgingStyleDropdown').classList.add('hidden');
  document.getElementById('judgingStyleSearch').value = '';
+ applyStyleToJCBA(s);
  drawShareCard();
  updateGuidelineLinks();
 }
@@ -1658,6 +2188,7 @@ function drawRoundedRectPath(ctx, x, y, w, h, r) {
 }
 
 function drawShareCard() {
+ updateSharePreview();
  const canvas = document.getElementById('shareCanvas');
  if (!canvas) return;
  const ctx = canvas.getContext('2d');
@@ -1789,11 +2320,11 @@ function drawShareCard() {
  drawPentagon(ctx, rx + rw / 2, 650, 145, state.axesVals, QUICK_STYLES.find(s => s.name === state.quickStyle)?.vals, themeObj.accent, state.theme !== 'light' && state.theme !== 'mono');
  } else {
  const items = [
- `外観: ${document.getElementById('score-app').value}/6`,
- `香り: ${document.getElementById('score-aro').value}/12`,
- `味: ${document.getElementById('score-fla').value}/20`,
- `口当たり: ${document.getElementById('score-mou').value}/5`,
- `総合: ${document.getElementById('score-ove').value}/7`
+ `外観: ${calcJCBAScores().app}/6`,
+ `香り: ${calcJCBAScores().aro}/10`,
+ `味: ${calcJCBAScores().fla}/19`,
+ `ボディ: ${calcJCBAScores().mou}/5`,
+ `全体: ${calcJCBAScores().ove}/10`
  ];
  ctx.fillStyle = themeObj.text;
  ctx.font = '700 24px sans-serif';
@@ -1846,11 +2377,11 @@ function drawShareCard() {
  drawPentagon(ctx, 760, 620, 190, state.axesVals, QUICK_STYLES.find(s => s.name === state.quickStyle)?.vals, themeObj.accent, state.theme !== 'light' && state.theme !== 'mono');
  } else {
  const items = [
- `Appearance: ${document.getElementById('score-app').value}/6`,
- `Aroma: ${document.getElementById('score-aro').value}/12`,
- `Flavor: ${document.getElementById('score-fla').value}/20`,
- `Mouthfeel: ${document.getElementById('score-mou').value}/5`,
- `Overall: ${document.getElementById('score-ove').value}/7`
+ `Appearance: ${calcJCBAScores().app}/6`,
+ `Aroma: ${calcJCBAScores().aro}/10`,
+ `Flavor: ${calcJCBAScores().fla}/19`,
+ `Body: ${calcJCBAScores().mou}/5`,
+ `Overall: ${calcJCBAScores().ove}/10`
  ];
  ctx.fillStyle = themeObj.text;
  ctx.font = '700 28px sans-serif';
@@ -2047,31 +2578,15 @@ function closeImageSaveModal() {
 }
 
 function copyShareText() {
- const beerName = document.getElementById('beerName').value.trim() || 'クラフトビール';
- const brewery = document.getElementById('breweryName').value.trim();
- const venue = document.getElementById('venueName').value.trim();
- const comment = document.getElementById('tastingComment').value.trim();
- const styleLabel = state.mode === 'subjective' ? state.quickStyle : state.judgingStyle.nameJa;
- const score = state.mode === 'subjective'
- ? `★${parseFloat(document.getElementById('overallRating').value).toFixed(1)}/5.0`
- : `スコア ${document.getElementById('judgingTotalScore').textContent}/50点`;
- const deductList = getAllDeductionsList();
-
- const lines = [
- `🍺 ${beerName}${brewery ? ` / ${brewery}` : ''}`,
- `スタイル: ${styleLabel} (${score})`,
- venue ? `📍 ${venue}` : '',
- (state.mode === 'judging' && deductList.length) ? `指摘要素: ${deductList.join(', ')}` : '',
- state.selectedTags.length ? state.selectedTags.map(t => `#${t}`).join(' ') : '',
- comment ? `\n${comment}` : '',
- `\n#BeerTastingNote #クラフトビール`
- ].filter(Boolean).join('\n');
-
+ const lines = buildShareText();
+ const statusEl = document.getElementById('snsCopyStatus');
+ const onCopied = () => {
+ if (statusEl) { statusEl.textContent = '✓ コピーしました'; setTimeout(() => { statusEl.textContent = ''; }, 2500); }
+ try { alert('SNS投稿用テキストをコピーしました！'); } catch (e) {}
+ };
  if (navigator.clipboard && navigator.clipboard.writeText) {
- navigator.clipboard.writeText(lines).then(() => alert('SNS投稿用テキストをコピーしました！')).catch(() => fallbackCopy(lines));
- } else {
- fallbackCopy(lines);
- }
+ navigator.clipboard.writeText(lines).then(onCopied).catch(() => { fallbackCopy(lines); onCopied(); });
+ } else { fallbackCopy(lines); onCopied(); }
 }
 
 function fallbackCopy(text) {
@@ -2152,9 +2667,26 @@ function deleteFromStorage(id) {
 }
 
 async function saveRecord() {
- const beerName = document.getElementById('beerName').value.trim();
- if (!beerName) { alert('ビール名を入力してください！'); return; }
+ const beerNameEl = document.getElementById('beerName');
+ const beerName = beerNameEl ? beerNameEl.value.trim() : '';
+ const banner = document.getElementById('recordStatusBanner');
+ if (!beerName) {
+ if (banner) {
+ banner.textContent = '⚠️ ビール名（タイトル）を入力してください！';
+ banner.classList.remove('hidden');
+ banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+ }
+ if (beerNameEl) {
+ beerNameEl.style.borderColor = '#f87171';
+ beerNameEl.focus();
+ setTimeout(() => { beerNameEl.style.borderColor = ''; }, 2500);
+ }
+ try { alert('ビール名を入力してください！'); } catch (e) {}
+ return;
+ }
+ if (banner) banner.classList.add('hidden');
 
+ const sc = calcJCBAScores();
  const rec = {
  id: Date.now(),
  date: new Date().toISOString(),
@@ -2168,27 +2700,17 @@ async function saveRecord() {
  overallRating: parseFloat(document.getElementById('overallRating').value),
  judgingStyleId: state.judgingStyle.id,
  judgingStyleName: state.judgingStyle.nameJa,
- judgingScores: {
- app: parseInt(document.getElementById('score-app').value),
- aro: parseInt(document.getElementById('score-aro').value),
- fla: parseInt(document.getElementById('score-fla').value),
- mou: parseInt(document.getElementById('score-mou').value),
- ove: parseInt(document.getElementById('score-ove').value),
- total: parseInt(document.getElementById('judgingTotalScore').textContent)
- },
- deductions: {
- app: [...(state.deductions.app || [])],
- aro: [...(state.deductions.aro || [])],
- fla: [...(state.deductions.fla || [])],
- mou: [...(state.deductions.mou || [])]
- },
+ judgingScores: { app: sc.app, aro: sc.aro, fla: sc.fla, mou: sc.mou, ove: sc.ove, total: sc.total },
+ jcba: JSON.parse(JSON.stringify(state.jcba)),
+ deductionsList: getAllDeductionsList(),
  tags: [...state.selectedTags],
+ offFlavors: [...(state.selectedOffFlavors || [])],
  comment: document.getElementById('tastingComment').value.trim(),
  photoDataUrl: (state.photoDataUrl && state.photoDataUrl.startsWith('data:')) ? state.photoDataUrl : null
  };
 
  await saveToStorage(rec);
- alert('テイスティング記録を保存しました！');
+ try { alert('テイスティング記録を保存しました！'); } catch (e) {}
  switchTab('history');
 }
 
@@ -2288,13 +2810,14 @@ async function openDetail(id) {
  if (r.photoDataUrl) { photo.src = r.photoDataUrl; photo.classList.remove('hidden'); }
  else { photo.classList.add('hidden'); }
 
- const ded = r.deductions ? [...(r.deductions.app||[]), ...(r.deductions.aro||[]), ...(r.deductions.fla||[]), ...(r.deductions.mou||[])] : [];
+ const ded = r.deductionsList ? r.deductionsList : (r.deductions ? [...(r.deductions.app||[]), ...(r.deductions.aro||[]), ...(r.deductions.fla||[]), ...(r.deductions.mou||[])] : []);
  const body = document.getElementById('detBody');
  body.innerHTML = `
  <div style="font-weight:700;">スタイル: ${r.mode === 'subjective' ? r.quickStyle : `${r.judgingStyleId}. ${r.judgingStyleName}`}</div>
  <div>スコア: ${r.mode === 'subjective' ? `★${r.overallRating.toFixed(1)} (${r.axesVals.join(' / ')})` : `${r.judgingScores.total}/50点`}</div>
  ${ded.length ? `<div style="color:#fbbf24;">減点要素: ${ded.join(', ')}</div>` : ''}
  ${r.tags?.length ? `<div>特徴: ${r.tags.join(', ')}</div>` : ''}
+ ${r.offFlavors?.length ? `<div style="color:#f87171;">オフフレーバー: ${r.offFlavors.join(', ')}</div>` : ''}
  ${r.comment ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border-color);">${r.comment}</div>` : ''}
  `;
 
@@ -2314,7 +2837,9 @@ function reloadRecord(r) {
  document.getElementById('abvIbu').value = r.abvIbu || '';
  document.getElementById('tastingComment').value = r.comment || '';
  state.selectedTags = [...(r.tags || [])];
+ state.selectedOffFlavors = [...(r.offFlavors || [])];
  renderFlavorTags();
+ renderOffFlavors();
 
  if (r.photoDataUrl) {
  state.photoDataUrl = r.photoDataUrl;
@@ -2340,17 +2865,10 @@ function reloadRecord(r) {
  setMode('subjective');
  } else {
  selectJudgingStyle(r.judgingStyleId);
- document.getElementById('score-app').value = r.judgingScores.app;
- document.getElementById('score-aro').value = r.judgingScores.aro;
- document.getElementById('score-fla').value = r.judgingScores.fla;
- document.getElementById('score-mou').value = r.judgingScores.mou;
+ if (r.jcba) { state.jcba = normalizeJCBAColor(JSON.parse(JSON.stringify(r.jcba))); }
+ if (r.judgingScores && typeof r.judgingScores.ove === 'number') {
  document.getElementById('score-ove').value = r.judgingScores.ove;
- state.deductions = r.deductions ? {
- app: [...(r.deductions.app || [])],
- aro: [...(r.deductions.aro || [])],
- fla: [...(r.deductions.fla || [])],
- mou: [...(r.deductions.mou || [])]
- } : { app: [], aro: [], fla: [], mou: [] };
+ }
  renderDeductionChips();
  updateJudging();
  setMode('judging');
@@ -2369,10 +2887,10 @@ async function deleteRecord(id) {
 
 async function exportCSV() {
  const all = await getAllRecords();
- if (!all.length) { alert('出力するデータがありません'); return; }
- const headers = ['日付', 'モード', 'ビール名', 'ブルワリー', '店名', 'スタイル', '総合スコア', '減点要素', '特徴タグ', 'メモ'];
+ if (!all.length) { try { alert('出力するデータがありません'); } catch (e) {} return; }
+ const headers = ['日付', 'モード', 'ビール名', 'ブルワリー', '店名', 'スタイル', '総合スコア', '減点要素', '特徴タグ', 'オフフレーバー', 'メモ'];
  const rows = all.map(r => {
- const ded = r.deductions ? [...(r.deductions.app||[]), ...(r.deductions.aro||[]), ...(r.deductions.fla||[]), ...(r.deductions.mou||[])] : [];
+ const ded = r.deductionsList ? r.deductionsList : (r.deductions ? [...(r.deductions.app||[]), ...(r.deductions.aro||[]), ...(r.deductions.fla||[]), ...(r.deductions.mou||[])] : []);
  return [
  new Date(r.date).toLocaleString(),
  r.mode === 'subjective' ? '主観' : '審査',
@@ -2383,30 +2901,24 @@ async function exportCSV() {
  r.mode === 'subjective' ? r.overallRating : r.judgingScores.total,
  `"${ded.join('/')}"`,
  `"${(r.tags || []).join('/')}"`,
+ `"${(r.offFlavors || []).join('/')}"`,
  `"${(r.comment || '').replace(/"/g, '""')}"`
  ].join(',');
  });
-
+ const csvText = [headers.join(','), ...rows].join('\n');
  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
- const blob = new Blob([bom, [headers.join(','), ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
- const link = document.createElement('a');
- link.href = URL.createObjectURL(blob);
- link.download = `beer-tasting-note-${new Date().toISOString().slice(0, 10)}.csv`;
- document.body.appendChild(link);
- link.click();
- document.body.removeChild(link);
+ const blob = new Blob([bom, csvText], { type: 'text/csv;charset=utf-8;' });
+ const filename = `beer-tasting-note-${new Date().toISOString().slice(0, 10)}.csv`;
+ await deliverExportFile('CSV出力', filename, 'text/csv', csvText, blob);
 }
 
 async function exportJSON() {
  const all = await getAllRecords();
- if (!all.length) { alert('出力するデータがありません'); return; }
- const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
- const link = document.createElement('a');
- link.href = URL.createObjectURL(blob);
- link.download = `beer-tasting-note-backup-${new Date().toISOString().slice(0, 10)}.json`;
- document.body.appendChild(link);
- link.click();
- document.body.removeChild(link);
+ if (!all.length) { try { alert('出力するデータがありません'); } catch (e) {} return; }
+ const jsonText = JSON.stringify(all, null, 2);
+ const blob = new Blob([jsonText], { type: 'application/json' });
+ const filename = `beer-tasting-note-backup-${new Date().toISOString().slice(0, 10)}.json`;
+ await deliverExportFile('JSON出力', filename, 'application/json', jsonText, blob);
 }
 
 function importJSON(e) {
@@ -2436,11 +2948,13 @@ function importJSON(e) {
 }
 
 let currentDetailStyle = null;
-const DEFAULT_GUIDELINE_URL = 'https://www.beertaster.org/beerstyle/';
+const DEFAULT_GUIDELINE_URL = 'https://beertaster.org/beerstyle/2026_detail/';
 
 function getGuidelineBaseUrl() {
  try {
- return window.localStorage.getItem('btn_guideline_url') || DEFAULT_GUIDELINE_URL;
+ const saved = window.localStorage.getItem('btn_guideline_url');
+ if (!saved || saved === 'https://www.beertaster.org/beerstyle/' || saved === 'https://beertaster.org/beerstyle/') return DEFAULT_GUIDELINE_URL;
+ return saved;
  } catch (e) {
  return DEFAULT_GUIDELINE_URL;
  }
@@ -2454,21 +2968,24 @@ function saveGuidelineUrl(val) {
 
 function updateGuidelineLinks() {
  const base = getGuidelineBaseUrl();
- const directEl = document.getElementById('jgWebDirectLink');
- if (directEl && state.judgingStyle) {
- directEl.href = buildStyleWebUrl(base, state.judgingStyle);
- }
- const sdLink = document.getElementById('sdWebLink');
- if (sdLink && currentDetailStyle) {
- sdLink.href = buildStyleWebUrl(base, currentDetailStyle);
+ const sdSearch = document.getElementById('sdSearchLink');
+ const sdPrev = document.getElementById('sdUrlPreview');
+ if (currentDetailStyle) {
+ const url = buildStyleWebUrl(base, currentDetailStyle);
+ if (sdPrev) sdPrev.textContent = url;
+ if (sdSearch) sdSearch.href = 'https://www.google.com/search?q=' + encodeURIComponent(currentDetailStyle.nameJa + ' ビアスタイル');
  }
 }
 
 function buildStyleWebUrl(baseUrl, styleObj) {
- if (!styleObj) return baseUrl;
- const cleanBase = baseUrl.split('#')[0];
- const targetText = encodeURIComponent(styleObj.nameJa);
- return `${cleanBase}#:~:text=${targetText}`;
+ const cleanBase = ((baseUrl || DEFAULT_GUIDELINE_URL).trim() || DEFAULT_GUIDELINE_URL).split('#')[0];
+ if (!styleObj || !styleObj.id) return cleanBase;
+ const m = String(styleObj.id).trim().match(/^(\d+)(?:-([A-Za-z]))?$/);
+ if (!m) return cleanBase;
+ const numStr = String(parseInt(m[1], 10)).padStart(3, '0');
+ const sub = m[2] ? m[2].toUpperCase() : '';
+ const dirBase = cleanBase.endsWith('.html') ? cleanBase.replace(/[^/]+\.html$/, '') : (cleanBase.endsWith('/') ? cleanBase : cleanBase + '/');
+ return `${dirBase}2026_${numStr}.html${sub ? `#e${numStr}${sub}` : ''}`;
 }
 
 function buildStructuredCriteria(s) {
@@ -2537,7 +3054,7 @@ function openStyleDetailModal(id) {
 
  const baseUrl = getGuidelineBaseUrl();
  document.getElementById('customGuidelineUrl').value = baseUrl;
- document.getElementById('sdWebLink').href = buildStyleWebUrl(baseUrl, s);
+ updateGuidelineLinks();
 
  document.getElementById('sdApplyBtn').onclick = () => {
  selectJudgingStyle(s.id);
@@ -2602,20 +3119,10 @@ function collectCurrentDraft() {
  axesVals: [...state.axesVals],
  overallRating: parseFloat(document.getElementById('overallRating').value),
  judgingStyleId: state.judgingStyle ? state.judgingStyle.id : '101-A',
- judgingScores: {
- app: parseInt(document.getElementById('score-app').value),
- aro: parseInt(document.getElementById('score-aro').value),
- fla: parseInt(document.getElementById('score-fla').value),
- mou: parseInt(document.getElementById('score-mou').value),
- ove: parseInt(document.getElementById('score-ove').value)
- },
- deductions: {
- app: [...(state.deductions.app || [])],
- aro: [...(state.deductions.aro || [])],
- fla: [...(state.deductions.fla || [])],
- mou: [...(state.deductions.mou || [])]
- },
+ jcba: JSON.parse(JSON.stringify(state.jcba)),
+ oveScore: parseInt(document.getElementById('score-ove').value),
  selectedTags: [...state.selectedTags],
+ selectedOffFlavors: [...(state.selectedOffFlavors || [])],
  comment: document.getElementById('tastingComment').value,
  photoDataUrl: (state.photoDataUrl && state.photoDataUrl.startsWith('data:')) ? state.photoDataUrl : null
  };
@@ -2706,23 +3213,13 @@ async function restoreDraftOnStartup() {
  document.getElementById('jgStyleDesc').textContent = s.desc;
  }
  }
- if (draft.judgingScores) {
- document.getElementById('score-app').value = draft.judgingScores.app || 5;
- document.getElementById('score-aro').value = draft.judgingScores.aro || 10;
- document.getElementById('score-fla').value = draft.judgingScores.fla || 17;
- document.getElementById('score-mou').value = draft.judgingScores.mou || 4;
- document.getElementById('score-ove').value = draft.judgingScores.ove || 6;
- }
- if (draft.deductions) {
- state.deductions = {
- app: [...(draft.deductions.app || [])],
- aro: [...(draft.deductions.aro || [])],
- fla: [...(draft.deductions.fla || [])],
- mou: [...(draft.deductions.mou || [])]
- };
- }
+ if (draft.jcba) { state.jcba = normalizeJCBAColor(draft.jcba); }
+ if (typeof draft.oveScore === 'number') { document.getElementById('score-ove').value = draft.oveScore; }
  if (Array.isArray(draft.selectedTags)) {
  state.selectedTags = [...draft.selectedTags];
+ }
+ if (Array.isArray(draft.selectedOffFlavors)) {
+ state.selectedOffFlavors = [...draft.selectedOffFlavors];
  }
  if (draft.photoDataUrl) {
  state.photoDataUrl = draft.photoDataUrl;
@@ -2737,6 +3234,7 @@ async function restoreDraftOnStartup() {
  renderSliders();
  renderDeductionChips();
  renderFlavorTags();
+ renderOffFlavors();
  updateJudging();
  if (draft.mode === 'judging') setMode('judging');
  else setMode('subjective');
@@ -2761,18 +3259,96 @@ function clearCurrentDraft() {
  document.getElementById('overallRatingVal').textContent = '4.0 / 5.0';
  state.deductions = { app: [], aro: [], fla: [], mou: [] };
  state.selectedTags = ['シトラス・柑橘', '松脂・ダンク'];
- document.getElementById('score-app').value = 5;
- document.getElementById('score-aro').value = 10;
- document.getElementById('score-fla').value = 17;
- document.getElementById('score-mou').value = 4;
- document.getElementById('score-ove').value = 6;
+ state.selectedOffFlavors = [];
+ state.jcba = createDefaultJCBA(state.judgingStyle);
+ document.getElementById('score-ove').value = 5;
  renderQuickStyles();
  renderSliders();
  renderDeductionChips();
  renderFlavorTags();
+ renderOffFlavors();
  updateJudging();
  drawShareCard();
  saveDraftNow();
+}
+
+
+function buildShareText() {
+ const beerName = document.getElementById('beerName').value.trim() || 'クラフトビール';
+ const brewery = document.getElementById('breweryName').value.trim();
+ const venue = document.getElementById('venueName').value.trim();
+ const comment = document.getElementById('tastingComment').value.trim();
+ const styleLabel = state.mode === 'subjective' ? state.quickStyle : `${state.judgingStyle.id}. ${state.judgingStyle.nameJa}`;
+ const score = state.mode === 'subjective'
+ ? `★${parseFloat(document.getElementById('overallRating').value).toFixed(1)}/5.0`
+ : `スコア ${document.getElementById('judgingTotalScore').textContent}/50点`;
+ const deductList = getAllDeductionsList();
+ return [
+ `🍺 ${beerName}${brewery ? ` / ${brewery}` : ''}`,
+ `スタイル: ${styleLabel} (${score})`,
+ venue ? `📍 ${venue}` : '',
+ (state.mode === 'judging' && deductList.length) ? `減点要素: ${deductList.join(', ')}` : '',
+ state.selectedTags.length ? state.selectedTags.map(t => `#${t}`).join(' ') : '',
+ comment ? `\n${comment}` : '',
+ `\n#BeerTastingNote #クラフトビール`
+ ].filter(Boolean).join('\n');
+}
+function updateSharePreview() {
+ const pre = document.getElementById('snsPostPreview');
+ if (pre) pre.textContent = buildShareText();
+}
+function openGuidelineWebSafely(styleObj) {
+ const url = buildStyleWebUrl(getGuidelineBaseUrl(), styleObj);
+ const win = window.open(url, '_blank', 'noopener,noreferrer');
+ if (!win) { location.href = url; }
+}
+function openDataExportModal(title, filename, mimeType, textBody, blobObj) {
+ document.getElementById('expModalTitle').textContent = `${title}（${filename}）`;
+ document.getElementById('expTextArea').value = textBody;
+ document.getElementById('expShareFileBtn').onclick = async () => {
+ try {
+ if (navigator.share && navigator.canShare && window.File) {
+ const f = new File([blobObj], filename, { type: mimeType });
+ if (navigator.canShare({ files: [f] })) {
+ await navigator.share({ files: [f], title: filename });
+ return;
+ }
+ }
+ } catch (err) { if (err && err.name === 'AbortError') return; }
+ triggerBlobDownload(blobObj, filename);
+ };
+ document.getElementById('expCopyAllBtn').onclick = () => {
+ if (navigator.clipboard && navigator.clipboard.writeText) {
+ navigator.clipboard.writeText(textBody).then(() => alert('内容をクリップボードにコピーしました！')).catch(() => fallbackCopy(textBody));
+ } else { fallbackCopy(textBody); }
+ };
+ document.getElementById('dataExportModal').classList.remove('hidden');
+}
+function closeDataExportModal() { document.getElementById('dataExportModal').classList.add('hidden'); }
+function triggerBlobDownload(blob, filename) {
+ try {
+ const url = URL.createObjectURL(blob);
+ const link = document.createElement('a');
+ link.href = url;
+ link.download = filename;
+ link.style.display = 'none';
+ document.body.appendChild(link);
+ link.click();
+ setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1500);
+ } catch (e) {}
+}
+async function deliverExportFile(title, filename, mimeType, textBody, blobObj) {
+ try {
+ if (navigator.share && navigator.canShare && window.File) {
+ const f = new File([blobObj], filename, { type: mimeType });
+ if (navigator.canShare({ files: [f] })) {
+ await navigator.share({ files: [f], title: filename });
+ return;
+ }
+ }
+ } catch (err) { if (err && err.name === 'AbortError') return; }
+ triggerBlobDownload(blobObj, filename);
+ openDataExportModal(title, filename, mimeType, textBody, blobObj);
 }
 
 </script>
