@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Beer Note">
 <meta name="theme-color" content="#0f1115">
-<title>Beer Tasting Note v3.11</title>
+<title>Beer Tasting Note v3.12</title>
 <style>
  :root {
  --bg-main: #0f1115;
@@ -710,7 +710,7 @@
  <div class="header-inner">
  <div class="brand">
  <div class="brand-icon">🍺</div>
- <div class="brand-title">Beer Tasting Note <span style="font-size:10px;opacity:0.65;font-weight:600;">v3.11</span></div>
+ <div class="brand-title">Beer Tasting Note <span style="font-size:10px;opacity:0.65;font-weight:600;">v3.12</span></div>
  </div>
  <div class="header-actions">
  <button type="button" onclick="cycleTheme()" class="btn-pill">🎨 <span id="themeLabel">Dark</span></button>
@@ -2314,29 +2314,48 @@ function drawRoundedRectPath(ctx, x, y, w, h, r) {
  ctx.closePath();
 }
 
+function tokenizeForWrap(text) {
+ // Keep ASCII alphanumeric words together so words like "Lager" do not split mid-word
+ const tokens = [];
+ const re = /[A-Za-z0-9\x27-]+|\s+|./gu;
+ let m;
+ while ((m = re.exec(text)) !== null) {
+  tokens.push(m[0]);
+ }
+ return tokens;
+}
+
 function fitAndWrapLines(ctx, text, maxW, maxSize, minSize, weight, maxLines) {
  if (!text) return { fontSize: maxSize, lines: [] };
+ const tokens = tokenizeForWrap(text);
  for (let sz = maxSize; sz >= minSize; sz -= 2) {
   ctx.font = `${weight} ${sz}px sans-serif`;
   if (ctx.measureText(text).width <= maxW) {
    return { fontSize: sz, lines: [text] };
   }
   if (maxLines > 1) {
-   const chars = Array.from(text);
    const lines = [];
    let cur = '';
    let overflow = false;
-   for (let i = 0; i < chars.length; i++) {
-    const test = cur + chars[i];
-    if (ctx.measureText(test).width > maxW && cur.length > 0) {
-     lines.push(cur);
-     cur = chars[i];
-     if (lines.length >= maxLines) { overflow = true; break; }
+   for (let i = 0; i < tokens.length; i++) {
+    const tk = tokens[i];
+    if (cur === '' && /^\s+$/.test(tk)) continue;
+    const test = cur + tk;
+    if (ctx.measureText(test).width > maxW) {
+     if (cur.length > 0) {
+      lines.push(cur.trimEnd());
+      if (lines.length >= maxLines) { overflow = true; break; }
+      cur = /^\s+$/.test(tk) ? '' : tk;
+      if (ctx.measureText(cur).width > maxW) { overflow = true; break; }
+     } else {
+      overflow = true;
+      break;
+     }
     } else {
      cur = test;
     }
    }
-   if (!overflow && cur) lines.push(cur);
+   if (!overflow && cur.trimEnd()) lines.push(cur.trimEnd());
    if (!overflow && lines.length <= maxLines) {
     return { fontSize: sz, lines };
    }
@@ -2344,23 +2363,24 @@ function fitAndWrapLines(ctx, text, maxW, maxSize, minSize, weight, maxLines) {
  }
  // Fallback at minSize with ellipsis on last line
  ctx.font = `${weight} ${minSize}px sans-serif`;
- const chars = Array.from(text);
  const lines = [];
  let cur = '';
- for (let i = 0; i < chars.length; i++) {
-  const test = cur + chars[i];
+ for (let i = 0; i < tokens.length; i++) {
+  const tk = tokens[i];
+  if (cur === '' && /^\s+$/.test(tk)) continue;
+  const test = cur + tk;
   if (ctx.measureText(test).width > maxW && cur.length > 0) {
    if (lines.length === maxLines - 1) {
-    lines.push(truncateText(ctx, cur, maxW));
+    lines.push(truncateText(ctx, cur.trimEnd(), maxW));
     return { fontSize: minSize, lines };
    }
-   lines.push(cur);
-   cur = chars[i];
+   lines.push(cur.trimEnd());
+   cur = /^\s+$/.test(tk) ? '' : tk;
   } else {
    cur = test;
   }
  }
- if (cur) lines.push(truncateText(ctx, cur, maxW));
+ if (cur.trimEnd()) lines.push(truncateText(ctx, cur.trimEnd(), maxW));
  return { fontSize: minSize, lines };
 }
 
@@ -2689,14 +2709,22 @@ function drawPentagon(ctx, cx, cy, r, vals, baseVals, color, isDarkBg) {
  ctx.stroke();
 
  ctx.fillStyle = labelCol;
- ctx.font = '700 18px sans-serif';
  ctx.textAlign = 'center';
- const shortLabels = ['アロマ', '苦味', '甘み', 'バランス', 'キレ'];
+ const shortLabels = ['アロマ', '苦味', '甘み', 'バランス', 'ドリンカビリティ'];
  for (let i = 0; i < n; i++) {
  const ang = -Math.PI / 2 + (i * 2 * Math.PI) / n;
  const lx = cx + (r + 26) * Math.cos(ang);
  const ly = cy + (r + 26) * Math.sin(ang) + 6;
- ctx.fillText(shortLabels[i], lx, ly);
+ if (shortLabels[i] === 'ドリンカビリティ') {
+  ctx.font = '700 15px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('ドリンカ', lx + 12, ly - 8);
+  ctx.fillText('ビリティ', lx + 12, ly + 10);
+  ctx.textAlign = 'center';
+ } else {
+  ctx.font = '700 18px sans-serif';
+  ctx.fillText(shortLabels[i], lx, ly);
+ }
  }
  ctx.textAlign = 'left';
 }
