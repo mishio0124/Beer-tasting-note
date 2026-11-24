@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Beer Note">
 <meta name="theme-color" content="#0f1115">
-<title>Beer Tasting Note v3.10</title>
+<title>Beer Tasting Note v3.11</title>
 <style>
  :root {
  --bg-main: #0f1115;
@@ -659,6 +659,48 @@
  background: rgba(0, 0, 0, 0.03);
  }
 
+ /* Range Ticks (1-10 scale for Overall Impression) */
+ .range-ticks {
+ display: grid;
+ grid-template-columns: repeat(10, 1fr);
+ gap: 2px;
+ margin-top: 6px;
+ }
+ .range-tick-btn {
+ background: transparent;
+ border: 1px solid transparent;
+ border-radius: 6px;
+ color: var(--text-muted);
+ font-size: 10px;
+ font-weight: 700;
+ padding: 4px 0;
+ text-align: center;
+ cursor: pointer;
+ position: relative;
+ }
+ .range-tick-btn::before {
+ content: '';
+ display: block;
+ width: 1px;
+ height: 5px;
+ background: var(--border-color);
+ margin: 0 auto 2px;
+ }
+ .range-tick-btn.active {
+ color: var(--accent);
+ background: rgba(245, 158, 11, 0.14);
+ border-color: var(--accent);
+ }
+ .quick-cat-label {
+ font-size: 10px;
+ font-weight: 700;
+ color: var(--text-muted);
+ margin: 8px 0 4px;
+ }
+ .quick-cat-label:first-child {
+ margin-top: 0;
+ }
+
 </style>
 </head>
 <body data-theme="dark">
@@ -668,7 +710,7 @@
  <div class="header-inner">
  <div class="brand">
  <div class="brand-icon">🍺</div>
- <div class="brand-title">Beer Tasting Note <span style="font-size:10px;opacity:0.65;font-weight:600;">v3.10</span></div>
+ <div class="brand-title">Beer Tasting Note <span style="font-size:10px;opacity:0.65;font-weight:600;">v3.11</span></div>
  </div>
  <div class="header-actions">
  <button type="button" onclick="cycleTheme()" class="btn-pill">🎨 <span id="themeLabel">Dark</span></button>
@@ -722,10 +764,13 @@
  <div id="section-subjective" class="stack">
  <section class="card">
  <div class="sec-head">
- <span class="sec-label">ビアスタイル（タップで基準値セット）</span>
- <span id="selectedQuickStyleLabel" class="accent-label">West Coast IPA</span>
+ <span class="sec-label">ビアスタイル（タップで基準値セット／自由入力可）</span>
+ <span id="selectedQuickStyleLabel" class="accent-label">IPA</span>
  </div>
- <div id="quickStyleGrid" class="chip-wrap"></div>
+ <div id="quickStyleGrid"></div>
+ <div style="margin-top:10px;">
+ <input type="text" id="customQuickStyle" placeholder="自由入力スタイル名（例：Hoppy Rice Lager）" oninput="onCustomQuickStyleInput(this.value)" />
+ </div>
  </section>
 
  <section class="card">
@@ -853,6 +898,7 @@
  <span id="val-ove" class="accent-label">5 / 10</span>
  </div>
  <input type="range" id="score-ove" min="1" max="10" step="1" value="5" oninput="updateJudging()" />
+ <div id="oveTicks" class="range-ticks"></div>
  </div>
  <div class="sec-head" style="margin-bottom:6px;">
  <span class="sec-label">テイスティングノート / 総評</span>
@@ -1064,21 +1110,34 @@
 
 <script>
 const QUICK_STYLES = [
- { name: 'West Coast IPA', vals: [4.5, 4.5, 1.5, 3.5, 3.5] },
- { name: 'Hazy / NE IPA', vals: [5.0, 2.0, 3.5, 3.5, 3.5] },
- { name: 'Session IPA', vals: [4.0, 3.5, 1.5, 4.0, 4.5] },
- { name: 'Imperial IPA', vals: [5.0, 5.0, 3.0, 3.0, 2.0] },
- { name: 'American Pale Ale', vals: [3.5, 3.5, 2.5, 4.5, 4.5] },
- { name: 'Pilsner', vals: [3.0, 3.5, 1.5, 4.5, 5.0] },
- { name: 'Golden / Blonde', vals: [2.5, 2.0, 2.5, 4.5, 5.0] },
- { name: 'Weizen / Witbier', vals: [4.0, 1.0, 3.5, 4.0, 4.5] },
- { name: 'Belgian / Saison', vals: [4.0, 2.5, 1.5, 4.0, 4.5] },
- { name: 'Amber / Red Ale', vals: [3.0, 3.0, 3.5, 4.0, 3.5] },
- { name: 'Brown / Porter', vals: [3.5, 2.5, 3.5, 4.0, 3.5] },
- { name: 'Stout / Imperial', vals: [4.5, 3.5, 4.5, 3.5, 2.0] },
- { name: 'Sour / Gose', vals: [4.0, 1.0, 2.0, 3.5, 4.5] },
- { name: 'Fruit / Spice', vals: [4.5, 1.5, 3.5, 3.5, 4.0] },
- { name: 'Barleywine', vals: [4.5, 3.5, 5.0, 3.5, 1.5] }
+ // ラガー系
+ { name: 'Pilsner', cat: 'ラガー系', vals: [3.0, 3.5, 1.5, 4.5, 5.0] },
+ { name: 'Lager', cat: 'ラガー系', vals: [2.5, 2.5, 2.0, 4.5, 5.0] },
+ { name: 'Dark Lager', cat: 'ラガー系', vals: [3.0, 2.5, 3.0, 4.5, 4.5] },
+ { name: 'Schwarz', cat: 'ラガー系', vals: [3.0, 2.5, 2.0, 4.5, 4.5] },
+ { name: 'IPL', cat: 'ラガー系', vals: [4.5, 4.0, 1.5, 4.0, 4.5] },
+ // ペール・IPA系
+ { name: 'Pale Ale', cat: 'ペール・IPA系', vals: [3.5, 3.5, 2.5, 4.5, 4.5] },
+ { name: 'IPA', cat: 'ペール・IPA系', vals: [4.5, 4.5, 2.0, 3.5, 3.5] },
+ { name: 'Hazy IPA', cat: 'ペール・IPA系', vals: [5.0, 2.0, 3.5, 3.5, 3.5] },
+ { name: 'Session IPA', cat: 'ペール・IPA系', vals: [4.0, 3.5, 1.5, 4.0, 4.5] },
+ { name: 'Imperial IPA', cat: 'ペール・IPA系', vals: [5.0, 5.0, 3.0, 3.0, 2.0] },
+ // 小麦・ベルギー系
+ { name: 'Weizen', cat: '小麦・ベルギー系', vals: [4.0, 1.0, 3.5, 4.0, 4.5] },
+ { name: 'Belgian Wit', cat: '小麦・ベルギー系', vals: [4.0, 1.5, 3.0, 4.5, 5.0] },
+ { name: 'Saison', cat: '小麦・ベルギー系', vals: [4.0, 2.5, 1.5, 4.0, 4.5] },
+ { name: 'Abbey', cat: '小麦・ベルギー系', vals: [4.5, 2.0, 4.0, 4.0, 3.0] },
+ // 濃色・リッチ系
+ { name: 'Amber', cat: '濃色・リッチ系', vals: [3.0, 3.0, 3.5, 4.0, 3.5] },
+ { name: 'Porter', cat: '濃色・リッチ系', vals: [3.5, 2.5, 3.5, 4.0, 3.5] },
+ { name: 'Brown', cat: '濃色・リッチ系', vals: [3.0, 2.5, 3.5, 4.0, 4.0] },
+ { name: 'Stout', cat: '濃色・リッチ系', vals: [4.5, 3.5, 4.0, 3.5, 2.5] },
+ // サワー・その他
+ { name: 'Sour', cat: 'サワー・その他', vals: [4.0, 1.0, 2.0, 3.5, 4.5] },
+ { name: 'Gose', cat: 'サワー・その他', vals: [3.5, 1.0, 2.0, 4.0, 5.0] },
+ { name: 'Fruit', cat: 'サワー・その他', vals: [4.5, 1.5, 3.5, 3.5, 4.0] },
+ { name: 'Spice', cat: 'サワー・その他', vals: [4.5, 2.0, 3.0, 3.5, 3.5] },
+ { name: 'Barleywine', cat: 'サワー・その他', vals: [4.5, 3.5, 5.0, 3.5, 1.5] }
 ];
 
 const AXES = ['アロマ', '苦味', '甘み', 'バランス', 'ドリンカビリティ'];
@@ -1276,8 +1335,9 @@ let state = {
  mode: 'subjective',
  theme: 'dark',
  cardFrame: 'focus',
- quickStyle: QUICK_STYLES[0].name,
- axesVals: [...QUICK_STYLES[0].vals],
+ quickStyle: 'IPA',
+ quickStyleBase: 'IPA',
+ axesVals: [...(QUICK_STYLES.find(s => s.name === 'IPA') || QUICK_STYLES[0]).vals],
  judgingStyle: STYLES_114[141],
  deductions: { app: [], aro: [], fla: [], mou: [] },
  selectedTags: ['シトラス・柑橘', '松脂・ダンク'],
@@ -1415,20 +1475,56 @@ function setMode(mode) {
 
 function renderQuickStyles() {
  const grid = document.getElementById('quickStyleGrid');
- grid.innerHTML = QUICK_STYLES.map(s => {
- const active = s.name === state.quickStyle;
- return `<button type="button" onclick="selectQuickStyle('${s.name}')" class="chip ${active ? 'active' : ''}">${s.name}</button>`;
+ if (!grid) return;
+ const cats = [...new Set(QUICK_STYLES.map(s => s.cat))];
+ grid.innerHTML = cats.map(c => {
+  const items = QUICK_STYLES.filter(s => s.cat === c);
+  const chips = items.map(s => {
+   const active = s.name === state.quickStyle;
+   return `<button type="button" onclick="selectQuickStyle('${s.name}')" class="chip ${active ? 'active' : ''}">${s.name}</button>`;
+  }).join('');
+  return `<div class="quick-cat-label">${c}</div><div class="chip-wrap">${chips}</div>`;
  }).join('');
+ const inp = document.getElementById('customQuickStyle');
+ if (inp && inp.value !== state.quickStyle) {
+  inp.value = state.quickStyle || '';
+ }
+ const lbl = document.getElementById('selectedQuickStyleLabel');
+ if (lbl) lbl.textContent = state.quickStyle || '未設定';
 }
 
 function selectQuickStyle(name) {
  const found = QUICK_STYLES.find(s => s.name === name);
  if (!found) return;
  state.quickStyle = found.name;
+ state.quickStyleBase = found.name;
  state.axesVals = [...found.vals];
  document.getElementById('selectedQuickStyleLabel').textContent = found.name;
+ const inp = document.getElementById('customQuickStyle');
+ if (inp) inp.value = found.name;
  renderQuickStyles();
  renderSliders();
+ drawShareCard();
+ scheduleDraftSave();
+}
+
+function onCustomQuickStyleInput(val) {
+ const trimmed = val.trim();
+ state.quickStyle = trimmed || state.quickStyleBase || 'Craft Beer';
+ const exact = QUICK_STYLES.find(s => s.name.toLowerCase() === trimmed.toLowerCase());
+ if (exact) {
+  state.quickStyle = exact.name;
+  state.quickStyleBase = exact.name;
+ }
+ const lbl = document.getElementById('selectedQuickStyleLabel');
+ if (lbl) lbl.textContent = state.quickStyle;
+ // Re-highlight chips without clobbering input cursor
+ const grid = document.getElementById('quickStyleGrid');
+ if (grid) {
+  grid.querySelectorAll('.chip').forEach(btn => {
+   btn.classList.toggle('active', btn.textContent === state.quickStyle);
+  });
+ }
  drawShareCard();
  scheduleDraftSave();
 }
@@ -1491,7 +1587,7 @@ const JCBA_SCHEMA = {
   ],
   condOpts: ['熟成', '鮮度', '酸化', '汚染'],
   afterOpts: ['渋み', '不快な苦味', '不快な甘味', '雑味・えぐみ', 'その他'],
-  bodyOpts: ['1. ライト', '2. ミディアム', '3. フル'],
+  bodyOpts: ['1. ライト', '2. ミディアム<br>ロー', '3. ミディアム', '4. ミディアム<br>ハイ', '5. フル'],
   carbOpts: [
     { val: 'low', label: '不足 (-1)' },
     { val: 'ok', label: '適正 (0)' },
@@ -1532,10 +1628,12 @@ function createDefaultJCBA(styleObj) {
   if (/ラガー/.test(s.cat || '')) fruityG = [1];
   else if (/ヴァイツェン|ベルギー|フルーツ|ヘイジー|セゾン/.test(desc)) fruityG = [3, 4];
 
-  // Estimate Body (1=light, 2=medium, 3=full)
-  let bodyG = [2];
+  // Estimate Body (1=light, 2=med-low, 3=medium, 4=med-high, 5=full)
+  let bodyG = [3];
   if (/ライト|セッション|ピルスナー|ベルリナー|ゴーゼ/.test(desc)) bodyG = [1, 2];
-  else if (/インペリアル|バーレー|ドッペル|アイスボック|クァドルペル/.test(desc)) bodyG = [3];
+  else if (/ヘレス|ケルシュ|ウィット|ブロンド|セゾン/.test(desc)) bodyG = [2, 3];
+  else if (/ボック|ポーター|スタウト|デュッベル|ストロング/.test(desc)) bodyG = [3, 4];
+  else if (/インペリアル|バーレー|ドッペル|アイスボック|クァドルペル/.test(desc)) bodyG = [4, 5];
 
   const pickFirst = arr => arr[0];
   return {
@@ -1561,7 +1659,7 @@ function createDefaultJCBA(styleObj) {
       other: { guide: [1], actual: 1 }
     },
     mou: {
-      body: { guide: bodyG, actual: pickFirst(bodyG) },
+      body: { guide: bodyG, actual: pickFirst(bodyG), rel5: true },
       carb: 'ok'
     }
   };
@@ -1584,10 +1682,14 @@ function toggleGuideEditMode() {
   }
 }
 
-function calcScaleDed(item) {
+function calcScaleDed(item, allowNoneLow) {
   if (!item || !item.guide || !item.guide.length) return 0;
   const minG = Math.min(...item.guide);
   const maxG = Math.max(...item.guide);
+  if (allowNoneLow) {
+    if (maxG === 1 && item.actual === 2) return 0;
+    if (minG === 2 && item.actual === 1) return 0;
+  }
   if (item.actual < minG) return minG - item.actual;
   if (item.actual > maxG) return item.actual - maxG;
   return 0;
@@ -1603,6 +1705,14 @@ function normalizeJCBAColor(j) {
     else if (j.app.color.actual > maxG) newAct = Math.min(5, 3 + oldDed);
     j.app.color = { guide: [3], actual: newAct, rel5: true };
   }
+  if (j && j.mou && j.mou.body && !j.mou.body.rel5) {
+    const map3to5 = v => (v === 1 ? 1 : (v === 3 ? 5 : 3));
+    j.mou.body = {
+      guide: (j.mou.body.guide || [2]).map(map3to5),
+      actual: map3to5(j.mou.body.actual || 2),
+      rel5: true
+    };
+  }
   return j;
 }
 
@@ -1617,19 +1727,19 @@ function calcJCBAScores() {
   const app = Math.max(0, 6 - appDed);
 
   // 2. アロマ (10点: モルト3 + ホップ3 + その他4)
-  const aroMaltDed = Math.min(3, calcScaleDed(j.aro.malt));
-  const aroHopDed = Math.min(3, calcScaleDed(j.aro.hop));
-  const aroOtherDed = Math.min(4, calcScaleDed(j.aro.fruity) + calcScaleDed(j.aro.other));
+  const aroMaltDed = Math.min(3, calcScaleDed(j.aro.malt, true));
+  const aroHopDed = Math.min(3, calcScaleDed(j.aro.hop, true));
+  const aroOtherDed = Math.min(4, calcScaleDed(j.aro.fruity, true) + calcScaleDed(j.aro.other, true));
   const aroDed = aroMaltDed + aroHopDed + aroOtherDed;
   const aro = Math.max(0, 10 - aroDed);
 
   // 3. フレーバー (19点: モルト3 + ホップ3 + 状態2 + アフターテイスト3 + バランス4 + その他4)
-  const flaMaltDed = Math.min(3, calcScaleDed(j.fla.malt));
-  const flaHopDed = Math.min(3, calcScaleDed(j.fla.hop));
+  const flaMaltDed = Math.min(3, calcScaleDed(j.fla.malt, true));
+  const flaHopDed = Math.min(3, calcScaleDed(j.fla.hop, true));
   const condDed = Math.min(2, (j.fla.conditions || []).length);
   const afterDed = Math.min(3, (j.fla.aftertaste || []).length);
-  const balDed = Math.min(4, calcScaleDed(j.fla.maltSweet) + calcScaleDed(j.fla.hopBitter));
-  const flaOtherDed = Math.min(4, calcScaleDed(j.fla.fruity) + calcScaleDed(j.fla.other));
+  const balDed = Math.min(4, calcScaleDed(j.fla.maltSweet, true) + calcScaleDed(j.fla.hopBitter, true));
+  const flaOtherDed = Math.min(4, calcScaleDed(j.fla.fruity, true) + calcScaleDed(j.fla.other, true));
   const flaDed = flaMaltDed + flaHopDed + condDed + afterDed + balDed + flaOtherDed;
   const fla = Math.max(0, 19 - flaDed);
 
@@ -1686,7 +1796,7 @@ function setJCBACarb(val) {
 
 function renderScaleRow(sec, def) {
   const item = state.jcba[sec][def.key];
-  const rawDed = calcScaleDed(item);
+  const rawDed = calcScaleDed(item, def.opts.length === 4);
   const ded = def.maxDed ? Math.min(def.maxDed, rawDed) : rawDed;
   const gridCls = def.opts.length === 3 ? 'jcba-grid-3' : (def.opts.length === 5 ? 'jcba-grid-5' : 'jcba-grid-4');
   const cells = def.opts.map((txt, idx) => {
@@ -1713,7 +1823,7 @@ function renderDeductionChips() {
   }
   const aroEl = document.getElementById('jcba-aro');
   if (aroEl) {
-    const aroOtherDed = Math.min(4, calcScaleDed(j.aro.fruity) + calcScaleDed(j.aro.other));
+    const aroOtherDed = Math.min(4, calcScaleDed(j.aro.fruity, true) + calcScaleDed(j.aro.other, true));
     const aroOtherHtml = `
       <div class="jcba-subbox" style="margin-bottom:0;">
         <div class="jcba-row-head" style="margin-bottom:6px;">
@@ -1728,8 +1838,8 @@ function renderDeductionChips() {
   if (flaEl) {
     const condDed = Math.min(2, (j.fla.conditions || []).length);
     const afterDed = Math.min(3, (j.fla.aftertaste || []).length);
-    const balDed = Math.min(4, calcScaleDed(j.fla.maltSweet) + calcScaleDed(j.fla.hopBitter));
-    const flaOtherDed = Math.min(4, calcScaleDed(j.fla.fruity) + calcScaleDed(j.fla.other));
+    const balDed = Math.min(4, calcScaleDed(j.fla.maltSweet, true) + calcScaleDed(j.fla.hopBitter, true));
+    const flaOtherDed = Math.min(4, calcScaleDed(j.fla.fruity, true) + calcScaleDed(j.fla.other, true));
     const condHtml = `
       <div class="jcba-row">
         <div class="jcba-row-head">
@@ -1798,27 +1908,43 @@ function getAllDeductionsList() {
   const list = [];
   const check = (sec, defs, prefix) => {
     defs.forEach(d => {
-      const raw = calcScaleDed(j[sec][d.key]);
+      const raw = calcScaleDed(j[sec][d.key], d.opts.length === 4);
       const ded = d.maxDed ? Math.min(d.maxDed, raw) : raw;
       if (ded > 0) list.push(`${prefix}${d.label.replace(/（.*?）/g,'')}(-${ded})`);
     });
   };
   check('app', JCBA_SCHEMA.app, '外観:');
   check('aro', JCBA_SCHEMA.aroTop, '香り:');
-  const aroOtherDed = Math.min(4, calcScaleDed(j.aro.fruity) + calcScaleDed(j.aro.other));
+  const aroOtherDed = Math.min(4, calcScaleDed(j.aro.fruity, true) + calcScaleDed(j.aro.other, true));
   if (aroOtherDed > 0) list.push(`香り:その他(-${aroOtherDed})`);
   check('fla', JCBA_SCHEMA.flaTop, '味:');
   if ((j.fla.conditions || []).length) list.push(`状態:${j.fla.conditions.join('・')}(-${Math.min(2, j.fla.conditions.length)})`);
   if ((j.fla.aftertaste || []).length) list.push(`後味:${j.fla.aftertaste.join('・')}(-${Math.min(3, j.fla.aftertaste.length)})`);
-  const balDed = Math.min(4, calcScaleDed(j.fla.maltSweet) + calcScaleDed(j.fla.hopBitter));
+  const balDed = Math.min(4, calcScaleDed(j.fla.maltSweet, true) + calcScaleDed(j.fla.hopBitter, true));
   if (balDed > 0) list.push(`バランス(-${balDed})`);
-  const flaOtherDed = Math.min(4, calcScaleDed(j.fla.fruity) + calcScaleDed(j.fla.other));
+  const flaOtherDed = Math.min(4, calcScaleDed(j.fla.fruity, true) + calcScaleDed(j.fla.other, true));
   if (flaOtherDed > 0) list.push(`味:その他(-${flaOtherDed})`);
   const bDed = calcScaleDed(j.mou.body);
   if (bDed > 0) list.push(`ボディ(-${bDed})`);
   if (j.mou.carb === 'low') list.push('炭酸不足(-1)');
   if (j.mou.carb === 'high') list.push('炭酸過剰(-1)');
   return list;
+}
+
+function setOveScore(v) {
+  const el = document.getElementById('score-ove');
+  if (el) el.value = v;
+  updateJudging();
+}
+
+function renderOveTicks(currentVal) {
+  const cont = document.getElementById('oveTicks');
+  if (!cont) return;
+  let h = '';
+  for (let i = 1; i <= 10; i++) {
+    h += `<button type="button" onclick="setOveScore(${i})" class="range-tick-btn ${i === currentVal ? 'active' : ''}">${i}</button>`;
+  }
+  cont.innerHTML = h;
 }
 
 function updateJudging() {
@@ -1830,6 +1956,7 @@ function updateJudging() {
   setTxt('val-mou', `${sc.mou} / 5${sc.mouDed ? ` (-${sc.mouDed})` : ''}`);
   setTxt('val-ove', `${sc.ove} / 10`);
   setTxt('judgingTotalScore', sc.total);
+  renderOveTicks(sc.ove);
   drawShareCard();
   scheduleDraftSave();
 }
@@ -2187,6 +2314,67 @@ function drawRoundedRectPath(ctx, x, y, w, h, r) {
  ctx.closePath();
 }
 
+function fitAndWrapLines(ctx, text, maxW, maxSize, minSize, weight, maxLines) {
+ if (!text) return { fontSize: maxSize, lines: [] };
+ for (let sz = maxSize; sz >= minSize; sz -= 2) {
+  ctx.font = `${weight} ${sz}px sans-serif`;
+  if (ctx.measureText(text).width <= maxW) {
+   return { fontSize: sz, lines: [text] };
+  }
+  if (maxLines > 1) {
+   const chars = Array.from(text);
+   const lines = [];
+   let cur = '';
+   let overflow = false;
+   for (let i = 0; i < chars.length; i++) {
+    const test = cur + chars[i];
+    if (ctx.measureText(test).width > maxW && cur.length > 0) {
+     lines.push(cur);
+     cur = chars[i];
+     if (lines.length >= maxLines) { overflow = true; break; }
+    } else {
+     cur = test;
+    }
+   }
+   if (!overflow && cur) lines.push(cur);
+   if (!overflow && lines.length <= maxLines) {
+    return { fontSize: sz, lines };
+   }
+  }
+ }
+ // Fallback at minSize with ellipsis on last line
+ ctx.font = `${weight} ${minSize}px sans-serif`;
+ const chars = Array.from(text);
+ const lines = [];
+ let cur = '';
+ for (let i = 0; i < chars.length; i++) {
+  const test = cur + chars[i];
+  if (ctx.measureText(test).width > maxW && cur.length > 0) {
+   if (lines.length === maxLines - 1) {
+    lines.push(truncateText(ctx, cur, maxW));
+    return { fontSize: minSize, lines };
+   }
+   lines.push(cur);
+   cur = chars[i];
+  } else {
+   cur = test;
+  }
+ }
+ if (cur) lines.push(truncateText(ctx, cur, maxW));
+ return { fontSize: minSize, lines };
+}
+
+function drawFittedBlock(ctx, text, x, topY, maxW, maxSize, minSize, weight, maxLines, lineRatio) {
+ const res = fitAndWrapLines(ctx, text, maxW, maxSize, minSize, weight, maxLines);
+ if (!res.lines.length) return topY;
+ const lh = Math.round(res.fontSize * (lineRatio || 1.18));
+ ctx.font = `${weight} ${res.fontSize}px sans-serif`;
+ res.lines.forEach((ln, idx) => {
+  ctx.fillText(ln, x, topY + res.fontSize + idx * lh);
+ });
+ return topY + res.fontSize + (res.lines.length - 1) * lh;
+}
+
 function drawShareCard() {
  updateSharePreview();
  const canvas = document.getElementById('shareCanvas');
@@ -2198,223 +2386,230 @@ function drawShareCard() {
  const beerName = document.getElementById('beerName').value.trim() || 'Untitled Craft Beer';
  const brewery = document.getElementById('breweryName').value.trim() || 'Craft Brewery';
  const venue = document.getElementById('venueName').value.trim();
+ const breweryLine = brewery + (venue ? ` @ ${venue}` : '');
  const comment = document.getElementById('tastingComment').value.trim();
- const styleLabel = state.mode === 'subjective' ? state.quickStyle : `${state.judgingStyle.id}. ${state.judgingStyle.nameJa}`;
+ const styleLabel = state.mode === 'subjective' ? (state.quickStyle || 'Craft Beer') : `${state.judgingStyle.id}. ${state.judgingStyle.nameJa}`;
  const scoreText = state.mode === 'subjective'
- ? `★ ${parseFloat(document.getElementById('overallRating').value).toFixed(1)}`
- : `${document.getElementById('judgingTotalScore').textContent} / 50`;
+  ? `★ ${parseFloat(document.getElementById('overallRating').value).toFixed(1)}`
+  : `${document.getElementById('judgingTotalScore').textContent} / 50`;
 
  const deductList = getAllDeductionsList();
- const tagLine = state.selectedTags.slice(0, 3).map(t => `#${t}`).join(' ');
+ const tagLine = state.selectedTags.slice(0, 4).map(t => `#${t}`).join(' ');
  const deductLine = (state.mode === 'judging' && deductList.length) ? `減点要素: ${deductList.slice(0, 3).join(' / ')}` : '';
+ const baseVals = (QUICK_STYLES.find(s => s.name === state.quickStyle) || QUICK_STYLES.find(s => s.name === state.quickStyleBase))?.vals;
 
  const renderContent = (img) => {
- ctx.fillStyle = themeObj.bg;
- ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = themeObj.bg;
+  ctx.fillRect(0, 0, W, H);
 
- if (state.cardFrame === 'focus') {
- if (img) drawCoverImage(ctx, img, 0, 0, W, H);
- else drawFallbackPattern(ctx, 0, 0, W, H, themeObj);
+  if (state.cardFrame === 'focus') {
+   if (img) drawCoverImage(ctx, img, 0, 0, W, H);
+   else drawFallbackPattern(ctx, 0, 0, W, H, themeObj);
 
- const grad = ctx.createLinearGradient(0, H * 0.56, 0, H);
- grad.addColorStop(0, 'rgba(0,0,0,0)');
- grad.addColorStop(1, 'rgba(0,0,0,0.84)');
- ctx.fillStyle = grad;
- ctx.fillRect(0, H * 0.52, W, H * 0.48);
+   const grad = ctx.createLinearGradient(0, H * 0.44, 0, H);
+   grad.addColorStop(0, 'rgba(0,0,0,0)');
+   grad.addColorStop(0.45, 'rgba(0,0,0,0.48)');
+   grad.addColorStop(1, 'rgba(0,0,0,0.88)');
+   ctx.fillStyle = grad;
+   ctx.fillRect(0, H * 0.42, W, H * 0.58);
 
- const focusAccent = (state.theme === 'mono') ? '#fbbf24' : themeObj.accent;
+   const focusAccent = (state.theme === 'mono') ? '#fbbf24' : themeObj.accent;
+   const fullW = 972;
+   const lowerW = state.mode === 'subjective' ? 660 : fullW;
 
- ctx.save();
- ctx.shadowColor = 'rgba(0,0,0,0.85)';
- ctx.shadowBlur = 14;
- ctx.fillStyle = focusAccent;
- ctx.font = '800 28px sans-serif';
- ctx.fillText(truncateText(ctx, styleLabel.toUpperCase(), 660), 54, 755);
+   // Compute upper block (Style + Beer Name + Brewery) using full width so names never clip!
+   const styleFit = fitAndWrapLines(ctx, styleLabel.toUpperCase(), fullW, 28, 20, '800', 1);
+   const nameFit = fitAndWrapLines(ctx, beerName, fullW, 56, 34, '900', 2);
+   const brewFit = fitAndWrapLines(ctx, breweryLine, fullW, 30, 20, '600', 2);
 
- ctx.fillStyle = '#ffffff';
- ctx.font = '900 56px sans-serif';
- ctx.fillText(truncateText(ctx, beerName, 640), 54, 825);
+   const nameH = nameFit.lines.length * Math.round(nameFit.fontSize * 1.15);
+   const brewH = brewFit.lines.length * Math.round(brewFit.fontSize * 1.2);
+   // Anchor brewery bottom above pentagon top (~758px in subjective mode, ~885px in judging mode)
+   const upperBottomY = state.mode === 'subjective' ? 765 : 885;
+   const brewTopY = upperBottomY - brewH;
+   const nameTopY = brewTopY - nameH - 12;
+   const styleTopY = nameTopY - styleFit.fontSize - 12;
 
- ctx.fillStyle = '#e5e7eb';
- ctx.font = '600 30px sans-serif';
- ctx.fillText(truncateText(ctx, brewery + (venue ? ` @ ${venue}` : ''), 640), 54, 875);
+   ctx.save();
+   ctx.shadowColor = 'rgba(0,0,0,0.9)';
+   ctx.shadowBlur = 14;
 
- ctx.fillStyle = focusAccent;
- ctx.font = '900 44px sans-serif';
- ctx.fillText(scoreText, 54, 950);
+   ctx.fillStyle = focusAccent;
+   drawFittedBlock(ctx, styleLabel.toUpperCase(), 54, styleTopY, fullW, 28, 20, '800', 1, 1.15);
 
- ctx.fillStyle = '#d1d5db';
- ctx.font = '600 23px sans-serif';
- ctx.fillText(truncateText(ctx, deductLine || tagLine, 650), 54, 1012);
- ctx.restore();
+   ctx.fillStyle = '#ffffff';
+   drawFittedBlock(ctx, beerName, 54, nameTopY, fullW, 56, 34, '900', 2, 1.15);
 
- if (state.mode === 'subjective') {
- drawPentagon(ctx, 885, 895, 130, state.axesVals, QUICK_STYLES.find(s => s.name === state.quickStyle)?.vals, focusAccent, true);
- }
+   ctx.fillStyle = '#e5e7eb';
+   drawFittedBlock(ctx, breweryLine, 54, brewTopY, fullW, 30, 20, '600', 2, 1.2);
 
- } else if (state.cardFrame === 'split') {
- const topH = 660;
- if (img) drawCoverImage(ctx, img, 0, 0, W, topH);
- else drawFallbackPattern(ctx, 0, 0, W, topH, themeObj);
+   ctx.fillStyle = focusAccent;
+   ctx.font = '900 46px sans-serif';
+   ctx.fillText(scoreText, 54, state.mode === 'subjective' ? 915 : 955);
 
- ctx.fillStyle = themeObj.card;
- ctx.fillRect(0, topH, W, H - topH);
+   ctx.fillStyle = '#d1d5db';
+   drawFittedBlock(ctx, deductLine || tagLine, 54, state.mode === 'subjective' ? 945 : 982, lowerW, 23, 18, '600', 2, 1.2);
+   ctx.restore();
 
- ctx.fillStyle = themeObj.accent;
- ctx.font = '800 24px sans-serif';
- ctx.fillText(truncateText(ctx, styleLabel, 660), 48, topH + 55);
+   if (state.mode === 'subjective') {
+    drawPentagon(ctx, 895, 915, 118, state.axesVals, baseVals, focusAccent, true);
+   }
 
- ctx.fillStyle = themeObj.text;
- ctx.font = '900 48px sans-serif';
- ctx.fillText(truncateText(ctx, beerName, 650), 48, topH + 115);
+  } else if (state.cardFrame === 'split') {
+   const topH = 600;
+   if (img) drawCoverImage(ctx, img, 0, 0, W, topH);
+   else drawFallbackPattern(ctx, 0, 0, W, topH, themeObj);
 
- ctx.globalAlpha = 0.75;
- ctx.font = '600 26px sans-serif';
- ctx.fillText(truncateText(ctx, brewery + (venue ? ` • ${venue}` : ''), 650), 48, topH + 160);
- ctx.globalAlpha = 1;
+   ctx.fillStyle = themeObj.card;
+   ctx.fillRect(0, topH, W, H - topH);
 
- ctx.fillStyle = themeObj.accent;
- ctx.font = '900 42px sans-serif';
- ctx.fillText(scoreText, 48, topH + 230);
+   const fullW = 984;
+   const lowerW = state.mode === 'subjective' ? 670 : fullW;
 
- ctx.fillStyle = themeObj.text;
- ctx.globalAlpha = 0.82;
- ctx.font = '600 22px sans-serif';
- ctx.fillText(truncateText(ctx, deductLine || tagLine, 650), 48, topH + 285);
- if (comment) ctx.fillText(truncateText(ctx, comment, 650), 48, topH + 335);
- ctx.globalAlpha = 1;
+   ctx.fillStyle = themeObj.accent;
+   let curY = drawFittedBlock(ctx, styleLabel, 48, topH + 28, fullW, 24, 18, '800', 1, 1.15);
 
- if (state.mode === 'subjective') {
- drawPentagon(ctx, 890, topH + 210, 135, state.axesVals, QUICK_STYLES.find(s => s.name === state.quickStyle)?.vals, themeObj.accent, state.theme !== 'light' && state.theme !== 'mono');
- }
+   ctx.fillStyle = themeObj.text;
+   curY = drawFittedBlock(ctx, beerName, 48, curY + 12, fullW, 46, 28, '900', 2, 1.14);
 
- } else if (state.cardFrame === 'side') {
- const leftW = 560;
- if (img) drawCoverImage(ctx, img, 0, 0, leftW, H);
- else drawFallbackPattern(ctx, 0, 0, leftW, H, themeObj);
+   ctx.globalAlpha = 0.78;
+   curY = drawFittedBlock(ctx, brewery + (venue ? ` • ${venue}` : ''), 48, curY + 10, fullW, 25, 18, '600', 2, 1.18);
+   ctx.globalAlpha = 1;
 
- ctx.fillStyle = themeObj.card;
- ctx.fillRect(leftW, 0, W - leftW, H);
+   const scoreY = Math.max(curY + 58, topH + 290);
+   ctx.fillStyle = themeObj.accent;
+   ctx.font = '900 42px sans-serif';
+   ctx.fillText(scoreText, 48, scoreY);
 
- const rx = leftW + 40;
- const rw = W - leftW - 75;
- ctx.fillStyle = themeObj.accent;
- ctx.font = '800 22px sans-serif';
- ctx.fillText(truncateText(ctx, styleLabel, rw), rx, 85);
+   ctx.fillStyle = themeObj.text;
+   ctx.globalAlpha = 0.85;
+   const afterTagY = drawFittedBlock(ctx, deductLine || tagLine, 48, scoreY + 18, lowerW, 22, 17, '600', 1, 1.2);
+   if (comment) {
+    drawFittedBlock(ctx, comment, 48, afterTagY + 10, lowerW, 21, 17, '500', 2, 1.2);
+   }
+   ctx.globalAlpha = 1;
 
- ctx.fillStyle = themeObj.text;
- ctx.font = '900 42px sans-serif';
- wrapText(ctx, beerName, rx, 145, rw, 52, 3);
+   if (state.mode === 'subjective') {
+    drawPentagon(ctx, 898, topH + 320, 118, state.axesVals, baseVals, themeObj.accent, state.theme !== 'light' && state.theme !== 'mono');
+   }
 
- ctx.globalAlpha = 0.75;
- ctx.font = '600 24px sans-serif';
- ctx.fillText(truncateText(ctx, brewery, rw), rx, 320);
- if (venue) ctx.fillText(truncateText(ctx, `@ ${venue}`, rw), rx, 358);
- ctx.globalAlpha = 1;
+  } else if (state.cardFrame === 'side') {
+   const leftW = 540;
+   if (img) drawCoverImage(ctx, img, 0, 0, leftW, H);
+   else drawFallbackPattern(ctx, 0, 0, leftW, H, themeObj);
 
- ctx.fillStyle = themeObj.accent;
- ctx.font = '900 48px sans-serif';
- ctx.fillText(scoreText, rx, 440);
+   ctx.fillStyle = themeObj.card;
+   ctx.fillRect(leftW, 0, W - leftW, H);
 
- if (state.mode === 'subjective') {
- drawPentagon(ctx, rx + rw / 2, 650, 145, state.axesVals, QUICK_STYLES.find(s => s.name === state.quickStyle)?.vals, themeObj.accent, state.theme !== 'light' && state.theme !== 'mono');
- } else {
- const items = [
- `外観: ${calcJCBAScores().app}/6`,
- `香り: ${calcJCBAScores().aro}/10`,
- `味: ${calcJCBAScores().fla}/19`,
- `ボディ: ${calcJCBAScores().mou}/5`,
- `全体: ${calcJCBAScores().ove}/10`
- ];
- ctx.fillStyle = themeObj.text;
- ctx.font = '700 24px sans-serif';
- items.forEach((it, idx) => ctx.fillText(it, rx, 520 + idx * 44));
- }
+   const rx = leftW + 36;
+   const rw = W - leftW - 68;
+   ctx.fillStyle = themeObj.accent;
+   let curY = drawFittedBlock(ctx, styleLabel, rx, 56, rw, 22, 16, '800', 2, 1.15);
 
- ctx.fillStyle = themeObj.text;
- ctx.globalAlpha = 0.85;
- ctx.font = '600 21px sans-serif';
- wrapText(ctx, deductLine || state.selectedTags.map(t => `#${t}`).join(' '), rx, 850, rw, 30, 3);
- ctx.globalAlpha = 1;
+   ctx.fillStyle = themeObj.text;
+   curY = drawFittedBlock(ctx, beerName, rx, curY + 14, rw, 42, 24, '900', 3, 1.15);
 
- } else {
- ctx.strokeStyle = themeObj.accent;
- ctx.lineWidth = 6;
- ctx.strokeRect(36, 36, W - 72, H - 72);
+   ctx.globalAlpha = 0.78;
+   curY = drawFittedBlock(ctx, breweryLine, rx, curY + 14, rw, 24, 17, '600', 2, 1.2);
+   ctx.globalAlpha = 1;
 
- ctx.fillStyle = themeObj.accent;
- ctx.font = '900 26px sans-serif';
- ctx.fillText('BEER TASTING NOTE // SENSORY SHEET', 72, 100);
+   const scoreY = Math.max(curY + 66, 430);
+   ctx.fillStyle = themeObj.accent;
+   ctx.font = '900 48px sans-serif';
+   ctx.fillText(scoreText, rx, scoreY);
 
- if (img) {
- ctx.save();
- drawRoundedRectPath(ctx, 72, 135, 240, 240, 20);
- ctx.clip();
- drawCoverImage(ctx, img, 72, 135, 240, 240);
- ctx.restore();
- }
+   if (state.mode === 'subjective') {
+    drawPentagon(ctx, rx + rw / 2, Math.max(scoreY + 195, 650), 140, state.axesVals, baseVals, themeObj.accent, state.theme !== 'light' && state.theme !== 'mono');
+   } else {
+    const items = [
+     `外観: ${calcJCBAScores().app}/6`,
+     `香り: ${calcJCBAScores().aro}/10`,
+     `味: ${calcJCBAScores().fla}/19`,
+     `ボディ: ${calcJCBAScores().mou}/5`,
+     `全体: ${calcJCBAScores().ove}/10`
+    ];
+    ctx.fillStyle = themeObj.text;
+    ctx.font = '700 24px sans-serif';
+    items.forEach((it, idx) => ctx.fillText(it, rx, Math.max(scoreY + 70, 520) + idx * 44));
+   }
 
- const tx = img ? 345 : 72;
- const tw = img ? 650 : 920;
- ctx.fillStyle = themeObj.accent;
- ctx.font = '800 26px sans-serif';
- ctx.fillText(truncateText(ctx, styleLabel, tw), tx, 175);
+   ctx.fillStyle = themeObj.text;
+   ctx.globalAlpha = 0.85;
+   drawFittedBlock(ctx, deductLine || state.selectedTags.map(t => `#${t}`).join(' '), rx, 855, rw, 21, 16, '600', 3, 1.25);
+   ctx.globalAlpha = 1;
 
- ctx.fillStyle = themeObj.text;
- ctx.font = '900 50px sans-serif';
- wrapText(ctx, beerName, tx, 240, tw, 58, 2);
+  } else {
+   ctx.strokeStyle = themeObj.accent;
+   ctx.lineWidth = 6;
+   ctx.strokeRect(36, 36, W - 72, H - 72);
 
- ctx.globalAlpha = 0.75;
- ctx.font = '600 26px sans-serif';
- ctx.fillText(truncateText(ctx, brewery + (venue ? ` @ ${venue}` : ''), tw), tx, 365);
- ctx.globalAlpha = 1;
+   ctx.fillStyle = themeObj.accent;
+   ctx.font = '900 26px sans-serif';
+   ctx.fillText('BEER TASTING NOTE // SENSORY SHEET', 72, 100);
 
- ctx.fillStyle = themeObj.accent;
- ctx.font = '900 68px sans-serif';
- ctx.fillText(scoreText, 72, 490);
+   if (img) {
+    ctx.save();
+    drawRoundedRectPath(ctx, 72, 135, 240, 240, 20);
+    ctx.clip();
+    drawCoverImage(ctx, img, 72, 135, 240, 240);
+    ctx.restore();
+   }
 
- if (state.mode === 'subjective') {
- drawPentagon(ctx, 760, 620, 190, state.axesVals, QUICK_STYLES.find(s => s.name === state.quickStyle)?.vals, themeObj.accent, state.theme !== 'light' && state.theme !== 'mono');
- } else {
- const items = [
- `Appearance: ${calcJCBAScores().app}/6`,
- `Aroma: ${calcJCBAScores().aro}/10`,
- `Flavor: ${calcJCBAScores().fla}/19`,
- `Body: ${calcJCBAScores().mou}/5`,
- `Overall: ${calcJCBAScores().ove}/10`
- ];
- ctx.fillStyle = themeObj.text;
- ctx.font = '700 28px sans-serif';
- items.forEach((it, idx) => ctx.fillText(it, 580, 490 + idx * 48));
- if (deductList.length) {
- ctx.fillStyle = themeObj.accent;
- ctx.font = '700 22px sans-serif';
- wrapText(ctx, `指摘: ${deductList.join(' / ')}`, 72, 565, 470, 32, 3);
- }
- }
+   const tx = img ? 345 : 72;
+   const tw = img ? 660 : 936;
+   ctx.fillStyle = themeObj.accent;
+   let curY = drawFittedBlock(ctx, styleLabel, tx, 145, tw, 25, 18, '800', 2, 1.15);
 
- ctx.fillStyle = themeObj.text;
- ctx.font = '700 24px sans-serif';
- wrapText(ctx, state.selectedTags.map(t => `#${t}`).join(' '), 72, 860, 920, 34, 2);
+   ctx.fillStyle = themeObj.text;
+   curY = drawFittedBlock(ctx, beerName, tx, curY + 12, tw, 48, 28, '900', 2, 1.15);
 
- if (comment) {
- ctx.globalAlpha = 0.8;
- ctx.font = '500 24px sans-serif';
- wrapText(ctx, comment, 72, 945, 920, 32, 2);
- ctx.globalAlpha = 1;
- }
- }
+   ctx.globalAlpha = 0.78;
+   drawFittedBlock(ctx, breweryLine, tx, curY + 12, tw, 26, 18, '600', 2, 1.2);
+   ctx.globalAlpha = 1;
+
+   ctx.fillStyle = themeObj.accent;
+   ctx.font = '900 68px sans-serif';
+   ctx.fillText(scoreText, 72, 490);
+
+   if (state.mode === 'subjective') {
+    drawPentagon(ctx, 760, 620, 190, state.axesVals, baseVals, themeObj.accent, state.theme !== 'light' && state.theme !== 'mono');
+   } else {
+    const items = [
+     `Appearance: ${calcJCBAScores().app}/6`,
+     `Aroma: ${calcJCBAScores().aro}/10`,
+     `Flavor: ${calcJCBAScores().fla}/19`,
+     `Body: ${calcJCBAScores().mou}/5`,
+     `Overall: ${calcJCBAScores().ove}/10`
+    ];
+    ctx.fillStyle = themeObj.text;
+    ctx.font = '700 28px sans-serif';
+    items.forEach((it, idx) => ctx.fillText(it, 580, 490 + idx * 48));
+    if (deductList.length) {
+     ctx.fillStyle = themeObj.accent;
+     drawFittedBlock(ctx, `指摘: ${deductList.join(' / ')}`, 72, 540, 470, 22, 17, '700', 3, 1.25);
+    }
+   }
+
+   ctx.fillStyle = themeObj.text;
+   drawFittedBlock(ctx, state.selectedTags.map(t => `#${t}`).join(' '), 72, 835, 936, 24, 18, '700', 2, 1.25);
+
+   if (comment) {
+    ctx.globalAlpha = 0.8;
+    drawFittedBlock(ctx, comment, 72, 920, 936, 24, 18, '500', 2, 1.25);
+    ctx.globalAlpha = 1;
+   }
+  }
  };
 
  if (state.photoImgObj && (state.photoImgObj.naturalWidth || state.photoImgObj.width)) {
- renderContent(state.photoImgObj);
+  renderContent(state.photoImgObj);
  } else if (state.photoDataUrl) {
- const img = new Image();
- img.onload = () => { state.photoImgObj = img; renderContent(img); };
- img.onerror = () => renderContent(null);
- img.src = state.photoDataUrl;
+  const img = new Image();
+  img.onload = () => { state.photoImgObj = img; renderContent(img); };
+  img.onerror = () => renderContent(null);
+  img.src = state.photoDataUrl;
  } else {
- renderContent(null);
+  renderContent(null);
  }
 }
 
@@ -2856,7 +3051,8 @@ function reloadRecord(r) {
  }
 
  if (r.mode === 'subjective') {
- state.quickStyle = r.quickStyle;
+ state.quickStyle = r.quickStyle || 'IPA';
+ if (QUICK_STYLES.some(s => s.name === state.quickStyle)) state.quickStyleBase = state.quickStyle;
  state.axesVals = [...r.axesVals];
  document.getElementById('overallRating').value = r.overallRating;
  renderQuickStyles();
@@ -3193,9 +3389,12 @@ async function restoreDraftOnStartup() {
  document.getElementById('abvIbu').value = draft.abvIbu || '';
  document.getElementById('tastingComment').value = draft.comment || '';
 
- if (draft.quickStyle && QUICK_STYLES.some(s => s.name === draft.quickStyle)) {
+ if (draft.quickStyle) {
  state.quickStyle = draft.quickStyle;
+ if (QUICK_STYLES.some(s => s.name === draft.quickStyle)) state.quickStyleBase = draft.quickStyle;
  document.getElementById('selectedQuickStyleLabel').textContent = draft.quickStyle;
+ const cqs = document.getElementById('customQuickStyle');
+ if (cqs) cqs.value = draft.quickStyle;
  }
  if (Array.isArray(draft.axesVals) && draft.axesVals.length === 5) {
  state.axesVals = [...draft.axesVals];
@@ -3252,8 +3451,9 @@ function clearCurrentDraft() {
  state.photoImgObj = null;
  document.getElementById('photoPreview').classList.add('hidden');
  document.getElementById('photoPlaceholder').classList.remove('hidden');
- state.quickStyle = QUICK_STYLES[0].name;
- state.axesVals = [...QUICK_STYLES[0].vals];
+ state.quickStyle = 'IPA';
+ state.quickStyleBase = 'IPA';
+ state.axesVals = [...(QUICK_STYLES.find(s => s.name === 'IPA') || QUICK_STYLES[0]).vals];
  document.getElementById('selectedQuickStyleLabel').textContent = state.quickStyle;
  document.getElementById('overallRating').value = 4.0;
  document.getElementById('overallRatingVal').textContent = '4.0 / 5.0';
